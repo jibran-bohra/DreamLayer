@@ -10,7 +10,7 @@ from comfy_api_nodes.apis import (
     MinimaxFileRetrieveResponse,
     MinimaxTaskResultResponse,
     SubjectReferenceItem,
-    Model
+    Model,
 )
 from comfy_api_nodes.apis.client import (
     ApiEndpoint,
@@ -29,6 +29,7 @@ from server import PromptServer
 
 I2V_AVERAGE_DURATION = 114
 T2V_AVERAGE_DURATION = 234
+
 
 class MinimaxTextToVideoNode:
     """
@@ -91,27 +92,30 @@ class MinimaxTextToVideoNode:
         prompt_text,
         seed=0,
         model="T2V-01",
-        image: torch.Tensor=None, # used for ImageToVideo
-        subject: torch.Tensor=None, # used for SubjectToVideo
-        unique_id: Union[str, None]=None,
+        image: torch.Tensor = None,  # used for ImageToVideo
+        subject: torch.Tensor = None,  # used for SubjectToVideo
+        unique_id: Union[str, None] = None,
         **kwargs,
     ):
-        '''
+        """
         Function used between MiniMax nodes - supports T2V, I2V, and S2V, based on provided arguments.
-        '''
+        """
         if image is None:
             validate_string(prompt_text, field_name="prompt_text")
         # upload image, if passed in
         image_url = None
         if image is not None:
-            image_url = upload_images_to_comfyapi(image, max_images=1, auth_kwargs=kwargs)[0]
+            image_url = upload_images_to_comfyapi(
+                image, max_images=1, auth_kwargs=kwargs
+            )[0]
 
         # TODO: figure out how to deal with subject properly, API returns invalid params when using S2V-01 model
         subject_reference = None
         if subject is not None:
-            subject_url = upload_images_to_comfyapi(subject, max_images=1, auth_kwargs=kwargs)[0]
+            subject_url = upload_images_to_comfyapi(
+                subject, max_images=1, auth_kwargs=kwargs
+            )[0]
             subject_reference = [SubjectReferenceItem(image=subject_url)]
-
 
         video_generate_operation = SynchronousOperation(
             endpoint=ApiEndpoint(
@@ -203,9 +207,7 @@ class MinimaxImageToVideoNode(MinimaxTextToVideoNode):
             "required": {
                 "image": (
                     IO.IMAGE,
-                    {
-                        "tooltip": "Image to use as first frame of video generation"
-                    },
+                    {"tooltip": "Image to use as first frame of video generation"},
                 ),
                 "prompt_text": (
                     "STRING",
@@ -267,9 +269,7 @@ class MinimaxSubjectToVideoNode(MinimaxTextToVideoNode):
             "required": {
                 "subject": (
                     IO.IMAGE,
-                    {
-                        "tooltip": "Image of subject to reference video generation"
-                    },
+                    {"tooltip": "Image of subject to reference video generation"},
                 ),
                 "prompt_text": (
                     "STRING",

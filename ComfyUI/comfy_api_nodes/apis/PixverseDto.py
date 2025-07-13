@@ -10,48 +10,48 @@ from pydantic import BaseModel, Field
 
 
 class V2OpenAPII2VResp(BaseModel):
-    video_id: Optional[int] = Field(None, description='Video_id')
+    video_id: Optional[int] = Field(None, description="Video_id")
 
 
 class V2OpenAPIT2VReq(BaseModel):
     aspect_ratio: str = Field(
-        ..., description='Aspect ratio (16:9, 4:3, 1:1, 3:4, 9:16)', examples=['16:9']
+        ..., description="Aspect ratio (16:9, 4:3, 1:1, 3:4, 9:16)", examples=["16:9"]
     )
     duration: int = Field(
         ...,
-        description='Video duration (5, 8 seconds, --model=v3.5 only allows 5,8; --quality=1080p does not support 8s)',
+        description="Video duration (5, 8 seconds, --model=v3.5 only allows 5,8; --quality=1080p does not support 8s)",
         examples=[5],
     )
     model: str = Field(
-        ..., description='Model version (only supports v3.5)', examples=['v3.5']
+        ..., description="Model version (only supports v3.5)", examples=["v3.5"]
     )
     motion_mode: Optional[str] = Field(
-        'normal',
-        description='Motion mode (normal, fast, --fast only available when duration=5; --quality=1080p does not support fast)',
-        examples=['normal'],
+        "normal",
+        description="Motion mode (normal, fast, --fast only available when duration=5; --quality=1080p does not support fast)",
+        examples=["normal"],
     )
     negative_prompt: Optional[str] = Field(
-        None, description='Negative prompt\n', max_length=2048
+        None, description="Negative prompt\n", max_length=2048
     )
-    prompt: str = Field(..., description='Prompt', max_length=2048)
+    prompt: str = Field(..., description="Prompt", max_length=2048)
     quality: str = Field(
         ...,
         description='Video quality ("360p"(Turbo model), "540p", "720p", "1080p")',
-        examples=['540p'],
+        examples=["540p"],
     )
-    seed: Optional[int] = Field(None, description='Random seed, range: 0 - 2147483647')
+    seed: Optional[int] = Field(None, description="Random seed, range: 0 - 2147483647")
     style: Optional[str] = Field(
         None,
         description='Style (effective when model=v3.5, "anime", "3d_animation", "clay", "comic", "cyberpunk") Do not include style parameter unless needed',
-        examples=['anime'],
+        examples=["anime"],
     )
     template_id: Optional[int] = Field(
         None,
-        description='Template ID (template_id must be activated before use)',
+        description="Template ID (template_id must be activated before use)",
         examples=[302325299692608],
     )
     water_mark: Optional[bool] = Field(
         False,
-        description='Watermark (true: add watermark, false: no watermark)',
+        description="Watermark (true: add watermark, false: no watermark)",
         examples=[False],
     )

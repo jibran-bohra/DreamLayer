@@ -11,7 +11,7 @@ from comfy_api_nodes.apis import (
     Veo2GenVidRequest,
     Veo2GenVidResponse,
     Veo2GenVidPollRequest,
-    Veo2GenVidPollResponse
+    Veo2GenVidPollResponse,
 )
 from comfy_api_nodes.apis.client import (
     ApiEndpoint,
@@ -22,16 +22,17 @@ from comfy_api_nodes.apis.client import (
 
 from comfy_api_nodes.apinode_utils import (
     downscale_image_tensor,
-    tensor_to_base64_string
+    tensor_to_base64_string,
 )
 
 AVERAGE_DURATION_VIDEO_GEN = 32
+
 
 def convert_image_to_base64(image: torch.Tensor):
     if image is None:
         return None
 
-    scaled_image = downscale_image_tensor(image, total_pixels=2048*2048)
+    scaled_image = downscale_image_tensor(image, total_pixels=2048 * 2048)
     return tensor_to_base64_string(scaled_image)
 
 
@@ -104,7 +105,7 @@ class VeoVideoGenerationNode(ComfyNodeABC):
                     {
                         "default": True,
                         "tooltip": "Whether to enhance the prompt with AI assistance",
-                    }
+                    },
                 ),
                 "person_generation": (
                     IO.COMBO,
@@ -126,10 +127,13 @@ class VeoVideoGenerationNode(ComfyNodeABC):
                         "tooltip": "Seed for video generation (0 for random)",
                     },
                 ),
-                "image": (IO.IMAGE, {
-                    "default": None,
-                    "tooltip": "Optional reference image to guide video generation",
-                }),
+                "image": (
+                    IO.IMAGE,
+                    {
+                        "default": None,
+                        "tooltip": "Optional reference image to guide video generation",
+                    },
+                ),
             },
             "hidden": {
                 "auth_token": "AUTH_TOKEN_COMFY_ORG",
@@ -160,9 +164,7 @@ class VeoVideoGenerationNode(ComfyNodeABC):
         # Prepare the instances for the request
         instances = []
 
-        instance = {
-            "prompt": prompt
-        }
+        instance = {"prompt": prompt}
 
         # Add image if provided
         if image is not None:
@@ -170,7 +172,7 @@ class VeoVideoGenerationNode(ComfyNodeABC):
             if image_base64:
                 instance["image"] = {
                     "bytesBase64Encoded": image_base64,
-                    "mimeType": "image/png"
+                    "mimeType": "image/png",
                 }
 
         instances.append(instance)
@@ -195,12 +197,9 @@ class VeoVideoGenerationNode(ComfyNodeABC):
                 path="/proxy/veo/generate",
                 method=HttpMethod.POST,
                 request_model=Veo2GenVidRequest,
-                response_model=Veo2GenVidResponse
+                response_model=Veo2GenVidResponse,
             ),
-            request=Veo2GenVidRequest(
-                instances=instances,
-                parameters=parameters
-            ),
+            request=Veo2GenVidRequest(instances=instances, parameters=parameters),
             auth_kwargs=kwargs,
         )
 
@@ -226,15 +225,13 @@ class VeoVideoGenerationNode(ComfyNodeABC):
                 path="/proxy/veo/poll",
                 method=HttpMethod.POST,
                 request_model=Veo2GenVidPollRequest,
-                response_model=Veo2GenVidPollResponse
+                response_model=Veo2GenVidPollResponse,
             ),
             completed_statuses=["completed"],
             failed_statuses=[],  # No failed statuses, we'll handle errors after polling
             status_extractor=status_extractor,
             progress_extractor=progress_extractor,
-            request=Veo2GenVidPollRequest(
-                operationName=operation_name
-            ),
+            request=Veo2GenVidPollRequest(operationName=operation_name),
             auth_kwargs=kwargs,
             poll_interval=5.0,
             result_url_extractor=get_video_url_from_response,
@@ -247,18 +244,21 @@ class VeoVideoGenerationNode(ComfyNodeABC):
 
         # Now check for errors in the final response
         # Check for error in poll response
-        if hasattr(poll_response, 'error') and poll_response.error:
+        if hasattr(poll_response, "error") and poll_response.error:
             error_message = f"Veo API error: {poll_response.error.message} (code: {poll_response.error.code})"
             logging.error(error_message)
             raise Exception(error_message)
 
         # Check for RAI filtered content
-        if (hasattr(poll_response.response, 'raiMediaFilteredCount') and
-            poll_response.response.raiMediaFilteredCount > 0):
-
+        if (
+            hasattr(poll_response.response, "raiMediaFilteredCount")
+            and poll_response.response.raiMediaFilteredCount > 0
+        ):
             # Extract reason message if available
-            if (hasattr(poll_response.response, 'raiMediaFilteredReasons') and
-                poll_response.response.raiMediaFilteredReasons):
+            if (
+                hasattr(poll_response.response, "raiMediaFilteredReasons")
+                and poll_response.response.raiMediaFilteredReasons
+            ):
                 reason = poll_response.response.raiMediaFilteredReasons[0]
                 error_message = f"Content filtered by Google's Responsible AI practices: {reason} ({poll_response.response.raiMediaFilteredCount} videos filtered.)"
             else:
@@ -269,14 +269,19 @@ class VeoVideoGenerationNode(ComfyNodeABC):
 
         # Extract video data
         video_data = None
-        if poll_response.response and hasattr(poll_response.response, 'videos') and poll_response.response.videos and len(poll_response.response.videos) > 0:
+        if (
+            poll_response.response
+            and hasattr(poll_response.response, "videos")
+            and poll_response.response.videos
+            and len(poll_response.response.videos) > 0
+        ):
             video = poll_response.response.videos[0]
 
             # Check if video is provided as base64 or URL
-            if hasattr(video, 'bytesBase64Encoded') and video.bytesBase64Encoded:
+            if hasattr(video, "bytesBase64Encoded") and video.bytesBase64Encoded:
                 # Decode base64 string to bytes
                 video_data = base64.b64decode(video.bytesBase64Encoded)
-            elif hasattr(video, 'gcsUri') and video.gcsUri:
+            elif hasattr(video, "gcsUri") and video.gcsUri:
                 # Download from URL
                 video_url = video.gcsUri
                 video_response = requests.get(video_url)

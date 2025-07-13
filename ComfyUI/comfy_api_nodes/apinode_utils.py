@@ -376,9 +376,7 @@ def upload_file_to_comfyapi(
 
 
 def video_to_base64_string(
-    video: VideoInput,
-    container_format: VideoContainer = None,
-    codec: VideoCodec = None
+    video: VideoInput, container_format: VideoContainer = None, codec: VideoCodec = None
 ) -> str:
     """
     Converts a video input to a base64 string.
@@ -391,8 +389,14 @@ def video_to_base64_string(
     video_bytes_io = io.BytesIO()
 
     # Use provided format/codec if specified, otherwise use video's own if available
-    format_to_use = container_format if container_format is not None else getattr(video, 'container', VideoContainer.MP4)
-    codec_to_use = codec if codec is not None else getattr(video, 'codec', VideoCodec.H264)
+    format_to_use = (
+        container_format
+        if container_format is not None
+        else getattr(video, "container", VideoContainer.MP4)
+    )
+    codec_to_use = (
+        codec if codec is not None else getattr(video, "codec", VideoCodec.H264)
+    )
 
     video.save_to(video_bytes_io, format=format_to_use, codec=codec_to_use)
     video_bytes_io.seek(0)

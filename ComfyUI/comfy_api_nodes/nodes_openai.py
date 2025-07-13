@@ -325,8 +325,8 @@ class OpenAIDalle3(ComfyNodeABC):
         model = "dall-e-3"
 
         # Extract OpenAI API key from kwargs and pass as auth_token
-        openai_key = kwargs.get('comfy_api_key')
-        
+        openai_key = kwargs.get("comfy_api_key")
+
         # build the operation
         operation = SynchronousOperation(
             endpoint=ApiEndpoint(

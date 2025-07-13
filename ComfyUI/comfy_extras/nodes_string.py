@@ -2,14 +2,15 @@ import re
 
 from comfy.comfy_types.node_typing import IO
 
-class StringConcatenate():
+
+class StringConcatenate:
     @classmethod
     def INPUT_TYPES(s):
         return {
             "required": {
                 "string_a": (IO.STRING, {"multiline": True}),
                 "string_b": (IO.STRING, {"multiline": True}),
-                "delimiter": (IO.STRING, {"multiline": False, "default": ""})
+                "delimiter": (IO.STRING, {"multiline": False, "default": ""}),
             }
         }
 
@@ -18,9 +19,10 @@ class StringConcatenate():
     CATEGORY = "utils/string"
 
     def execute(self, string_a, string_b, delimiter, **kwargs):
-        return delimiter.join((string_a, string_b)),
+        return (delimiter.join((string_a, string_b)),)
 
-class StringSubstring():
+
+class StringSubstring:
     @classmethod
     def INPUT_TYPES(s):
         return {
@@ -36,16 +38,13 @@ class StringSubstring():
     CATEGORY = "utils/string"
 
     def execute(self, string, start, end, **kwargs):
-        return string[start:end],
+        return (string[start:end],)
 
-class StringLength():
+
+class StringLength:
     @classmethod
     def INPUT_TYPES(s):
-        return {
-            "required": {
-                "string": (IO.STRING, {"multiline": True})
-            }
-        }
+        return {"required": {"string": (IO.STRING, {"multiline": True})}}
 
     RETURN_TYPES = (IO.INT,)
     RETURN_NAMES = ("length",)
@@ -55,15 +54,19 @@ class StringLength():
     def execute(self, string, **kwargs):
         length = len(string)
 
-        return length,
+        return (length,)
 
-class CaseConverter():
+
+class CaseConverter:
     @classmethod
     def INPUT_TYPES(s):
         return {
             "required": {
                 "string": (IO.STRING, {"multiline": True}),
-                "mode": (IO.COMBO, {"options": ["UPPERCASE", "lowercase", "Capitalize", "Title Case"]})
+                "mode": (
+                    IO.COMBO,
+                    {"options": ["UPPERCASE", "lowercase", "Capitalize", "Title Case"]},
+                ),
             }
         }
 
@@ -83,16 +86,16 @@ class CaseConverter():
         else:
             result = string
 
-        return result,
+        return (result,)
 
 
-class StringTrim():
+class StringTrim:
     @classmethod
     def INPUT_TYPES(s):
         return {
             "required": {
                 "string": (IO.STRING, {"multiline": True}),
-                "mode": (IO.COMBO, {"options": ["Both", "Left", "Right"]})
+                "mode": (IO.COMBO, {"options": ["Both", "Left", "Right"]}),
             }
         }
 
@@ -110,16 +113,17 @@ class StringTrim():
         else:
             result = string
 
-        return result,
+        return (result,)
 
-class StringReplace():
+
+class StringReplace:
     @classmethod
     def INPUT_TYPES(s):
         return {
             "required": {
                 "string": (IO.STRING, {"multiline": True}),
                 "find": (IO.STRING, {"multiline": True}),
-                "replace": (IO.STRING, {"multiline": True})
+                "replace": (IO.STRING, {"multiline": True}),
             }
         }
 
@@ -129,17 +133,17 @@ class StringReplace():
 
     def execute(self, string, find, replace, **kwargs):
         result = string.replace(find, replace)
-        return result,
+        return (result,)
 
 
-class StringContains():
+class StringContains:
     @classmethod
     def INPUT_TYPES(s):
         return {
             "required": {
                 "string": (IO.STRING, {"multiline": True}),
                 "substring": (IO.STRING, {"multiline": True}),
-                "case_sensitive": (IO.BOOLEAN, {"default": True})
+                "case_sensitive": (IO.BOOLEAN, {"default": True}),
             }
         }
 
@@ -154,10 +158,10 @@ class StringContains():
         else:
             contains = substring.lower() in string.lower()
 
-        return contains,
+        return (contains,)
 
 
-class StringCompare():
+class StringCompare:
     @classmethod
     def INPUT_TYPES(s):
         return {
@@ -165,7 +169,7 @@ class StringCompare():
                 "string_a": (IO.STRING, {"multiline": True}),
                 "string_b": (IO.STRING, {"multiline": True}),
                 "mode": (IO.COMBO, {"options": ["Starts With", "Ends With", "Equal"]}),
-                "case_sensitive": (IO.BOOLEAN, {"default": True})
+                "case_sensitive": (IO.BOOLEAN, {"default": True}),
             }
         }
 
@@ -182,13 +186,14 @@ class StringCompare():
             b = string_b.lower()
 
         if mode == "Equal":
-            return a == b,
+            return (a == b,)
         elif mode == "Starts With":
-            return a.startswith(b),
+            return (a.startswith(b),)
         elif mode == "Ends With":
-            return a.endswith(b),
+            return (a.endswith(b),)
 
-class RegexMatch():
+
+class RegexMatch:
     @classmethod
     def INPUT_TYPES(s):
         return {
@@ -197,7 +202,7 @@ class RegexMatch():
                 "regex_pattern": (IO.STRING, {"multiline": True}),
                 "case_insensitive": (IO.BOOLEAN, {"default": True}),
                 "multiline": (IO.BOOLEAN, {"default": False}),
-                "dotall": (IO.BOOLEAN, {"default": False})
+                "dotall": (IO.BOOLEAN, {"default": False}),
             }
         }
 
@@ -206,7 +211,9 @@ class RegexMatch():
     FUNCTION = "execute"
     CATEGORY = "utils/string"
 
-    def execute(self, string, regex_pattern, case_insensitive, multiline, dotall, **kwargs):
+    def execute(
+        self, string, regex_pattern, case_insensitive, multiline, dotall, **kwargs
+    ):
         flags = 0
 
         if case_insensitive:
@@ -223,21 +230,31 @@ class RegexMatch():
         except re.error:
             result = False
 
-        return result,
+        return (result,)
 
 
-class RegexExtract():
+class RegexExtract:
     @classmethod
     def INPUT_TYPES(s):
         return {
             "required": {
                 "string": (IO.STRING, {"multiline": True}),
                 "regex_pattern": (IO.STRING, {"multiline": True}),
-                "mode": (IO.COMBO, {"options": ["First Match", "All Matches", "First Group", "All Groups"]}),
+                "mode": (
+                    IO.COMBO,
+                    {
+                        "options": [
+                            "First Match",
+                            "All Matches",
+                            "First Group",
+                            "All Groups",
+                        ]
+                    },
+                ),
                 "case_insensitive": (IO.BOOLEAN, {"default": True}),
                 "multiline": (IO.BOOLEAN, {"default": False}),
                 "dotall": (IO.BOOLEAN, {"default": False}),
-                "group_index": (IO.INT, {"default": 1, "min": 0, "max": 100})
+                "group_index": (IO.INT, {"default": 1, "min": 0, "max": 100}),
             }
         }
 
@@ -245,7 +262,17 @@ class RegexExtract():
     FUNCTION = "execute"
     CATEGORY = "utils/string"
 
-    def execute(self, string, regex_pattern, mode, case_insensitive, multiline, dotall, group_index, **kwargs):
+    def execute(
+        self,
+        string,
+        regex_pattern,
+        mode,
+        case_insensitive,
+        multiline,
+        dotall,
+        group_index,
+        **kwargs,
+    ):
         join_delimiter = "\n"
 
         flags = 0
@@ -294,11 +321,12 @@ class RegexExtract():
         except re.error:
             result = ""
 
-        return result,
+        return (result,)
 
 
-class RegexReplace():
+class RegexReplace:
     DESCRIPTION = "Find and replace text using regex patterns."
+
     @classmethod
     def INPUT_TYPES(s):
         return {
@@ -310,16 +338,40 @@ class RegexReplace():
             "optional": {
                 "case_insensitive": (IO.BOOLEAN, {"default": True}),
                 "multiline": (IO.BOOLEAN, {"default": False}),
-                "dotall": (IO.BOOLEAN, {"default": False, "tooltip": "When enabled, the dot (.) character will match any character including newline characters. When disabled, dots won't match newlines."}),
-                "count": (IO.INT, {"default": 0, "min": 0, "max": 100, "tooltip": "Maximum number of replacements to make. Set to 0 to replace all occurrences (default). Set to 1 to replace only the first match, 2 for the first two matches, etc."}),
-            }
+                "dotall": (
+                    IO.BOOLEAN,
+                    {
+                        "default": False,
+                        "tooltip": "When enabled, the dot (.) character will match any character including newline characters. When disabled, dots won't match newlines.",
+                    },
+                ),
+                "count": (
+                    IO.INT,
+                    {
+                        "default": 0,
+                        "min": 0,
+                        "max": 100,
+                        "tooltip": "Maximum number of replacements to make. Set to 0 to replace all occurrences (default). Set to 1 to replace only the first match, 2 for the first two matches, etc.",
+                    },
+                ),
+            },
         }
 
     RETURN_TYPES = (IO.STRING,)
     FUNCTION = "execute"
     CATEGORY = "utils/string"
 
-    def execute(self, string, regex_pattern, replace, case_insensitive=True, multiline=False, dotall=False, count=0, **kwargs):
+    def execute(
+        self,
+        string,
+        regex_pattern,
+        replace,
+        case_insensitive=True,
+        multiline=False,
+        dotall=False,
+        count=0,
+        **kwargs,
+    ):
         flags = 0
 
         if case_insensitive:
@@ -329,7 +381,8 @@ class RegexReplace():
         if dotall:
             flags |= re.DOTALL
         result = re.sub(regex_pattern, replace, string, count=count, flags=flags)
-        return result,
+        return (result,)
+
 
 NODE_CLASS_MAPPINGS = {
     "StringConcatenate": StringConcatenate,

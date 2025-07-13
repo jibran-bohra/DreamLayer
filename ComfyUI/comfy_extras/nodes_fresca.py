@@ -57,18 +57,44 @@ class FreSca:
         return {
             "required": {
                 "model": ("MODEL",),
-                "scale_low": ("FLOAT", {"default": 1.0, "min": 0, "max": 10, "step": 0.01,
-                                        "tooltip": "Scaling factor for low-frequency components"}),
-                "scale_high": ("FLOAT", {"default": 1.25, "min": 0, "max": 10, "step": 0.01,
-                                        "tooltip": "Scaling factor for high-frequency components"}),
-                "freq_cutoff": ("INT", {"default": 20, "min": 1, "max": 10000, "step": 1,
-                                        "tooltip": "Number of frequency indices around center to consider as low-frequency"}),
+                "scale_low": (
+                    "FLOAT",
+                    {
+                        "default": 1.0,
+                        "min": 0,
+                        "max": 10,
+                        "step": 0.01,
+                        "tooltip": "Scaling factor for low-frequency components",
+                    },
+                ),
+                "scale_high": (
+                    "FLOAT",
+                    {
+                        "default": 1.25,
+                        "min": 0,
+                        "max": 10,
+                        "step": 0.01,
+                        "tooltip": "Scaling factor for high-frequency components",
+                    },
+                ),
+                "freq_cutoff": (
+                    "INT",
+                    {
+                        "default": 20,
+                        "min": 1,
+                        "max": 10000,
+                        "step": 1,
+                        "tooltip": "Number of frequency indices around center to consider as low-frequency",
+                    },
+                ),
             }
         }
+
     RETURN_TYPES = ("MODEL",)
     FUNCTION = "patch"
     CATEGORY = "_for_testing"
     DESCRIPTION = "Applies frequency-dependent scaling to the guidance"
+
     def patch(self, model, scale_low, scale_high, freq_cutoff):
         def custom_cfg_function(args):
             cond = args["conds_out"][0]

@@ -1,19 +1,19 @@
 """
-    This file is part of ComfyUI.
-    Copyright (C) 2024 Stability AI
+This file is part of ComfyUI.
+Copyright (C) 2024 Stability AI
 
-    This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
 
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
 
-    You should have received a copy of the GNU General Public License
-    along with this program.  If not, see <https://www.gnu.org/licenses/>.
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 import torch
@@ -24,10 +24,14 @@ import comfy.float
 import comfy.rmsnorm
 import contextlib
 
-cast_to = comfy.model_management.cast_to #TODO: remove once no more references
+cast_to = comfy.model_management.cast_to  # TODO: remove once no more references
+
 
 def cast_to_input(weight, input, non_blocking=False, copy=True):
-    return comfy.model_management.cast_to(weight, input.dtype, input.device, non_blocking=non_blocking, copy=copy)
+    return comfy.model_management.cast_to(
+        weight, input.dtype, input.device, non_blocking=non_blocking, copy=copy
+    )
+
 
 def cast_bias_weight(s, input=None, dtype=None, device=None, bias_dtype=None):
     if input is not None:
@@ -48,7 +52,14 @@ def cast_bias_weight(s, input=None, dtype=None, device=None, bias_dtype=None):
     non_blocking = comfy.model_management.device_supports_non_blocking(device)
     if s.bias is not None:
         has_function = len(s.bias_function) > 0
-        bias = comfy.model_management.cast_to(s.bias, bias_dtype, device, non_blocking=non_blocking, copy=has_function, stream=offload_stream)
+        bias = comfy.model_management.cast_to(
+            s.bias,
+            bias_dtype,
+            device,
+            non_blocking=non_blocking,
+            copy=has_function,
+            stream=offload_stream,
+        )
 
         if has_function:
             with wf_context:
@@ -56,7 +67,14 @@ def cast_bias_weight(s, input=None, dtype=None, device=None, bias_dtype=None):
                     bias = f(bias)
 
     has_function = len(s.weight_function) > 0
-    weight = comfy.model_management.cast_to(s.weight, dtype, device, non_blocking=non_blocking, copy=has_function, stream=offload_stream)
+    weight = comfy.model_management.cast_to(
+        s.weight,
+        dtype,
+        device,
+        non_blocking=non_blocking,
+        copy=has_function,
+        stream=offload_stream,
+    )
     if has_function:
         with wf_context:
             for f in s.weight_function:
@@ -65,10 +83,12 @@ def cast_bias_weight(s, input=None, dtype=None, device=None, bias_dtype=None):
     comfy.model_management.sync_stream(device, offload_stream)
     return weight, bias
 
+
 class CastWeightBiasOp:
     comfy_cast_weights = False
     weight_function = []
     bias_function = []
+
 
 class disable_weight_init:
     class Linear(torch.nn.Linear, CastWeightBiasOp):
@@ -80,7 +100,11 @@ class disable_weight_init:
             return torch.nn.functional.linear(input, weight, bias)
 
         def forward(self, *args, **kwargs):
-            if self.comfy_cast_weights or len(self.weight_function) > 0 or len(self.bias_function) > 0:
+            if (
+                self.comfy_cast_weights
+                or len(self.weight_function) > 0
+                or len(self.bias_function) > 0
+            ):
                 return self.forward_comfy_cast_weights(*args, **kwargs)
             else:
                 return super().forward(*args, **kwargs)
@@ -94,7 +118,11 @@ class disable_weight_init:
             return self._conv_forward(input, weight, bias)
 
         def forward(self, *args, **kwargs):
-            if self.comfy_cast_weights or len(self.weight_function) > 0 or len(self.bias_function) > 0:
+            if (
+                self.comfy_cast_weights
+                or len(self.weight_function) > 0
+                or len(self.bias_function) > 0
+            ):
                 return self.forward_comfy_cast_weights(*args, **kwargs)
             else:
                 return super().forward(*args, **kwargs)
@@ -108,7 +136,11 @@ class disable_weight_init:
             return self._conv_forward(input, weight, bias)
 
         def forward(self, *args, **kwargs):
-            if self.comfy_cast_weights or len(self.weight_function) > 0 or len(self.bias_function) > 0:
+            if (
+                self.comfy_cast_weights
+                or len(self.weight_function) > 0
+                or len(self.bias_function) > 0
+            ):
                 return self.forward_comfy_cast_weights(*args, **kwargs)
             else:
                 return super().forward(*args, **kwargs)
@@ -122,7 +154,11 @@ class disable_weight_init:
             return self._conv_forward(input, weight, bias)
 
         def forward(self, *args, **kwargs):
-            if self.comfy_cast_weights or len(self.weight_function) > 0 or len(self.bias_function) > 0:
+            if (
+                self.comfy_cast_weights
+                or len(self.weight_function) > 0
+                or len(self.bias_function) > 0
+            ):
                 return self.forward_comfy_cast_weights(*args, **kwargs)
             else:
                 return super().forward(*args, **kwargs)
@@ -133,10 +169,16 @@ class disable_weight_init:
 
         def forward_comfy_cast_weights(self, input):
             weight, bias = cast_bias_weight(self, input)
-            return torch.nn.functional.group_norm(input, self.num_groups, weight, bias, self.eps)
+            return torch.nn.functional.group_norm(
+                input, self.num_groups, weight, bias, self.eps
+            )
 
         def forward(self, *args, **kwargs):
-            if self.comfy_cast_weights or len(self.weight_function) > 0 or len(self.bias_function) > 0:
+            if (
+                self.comfy_cast_weights
+                or len(self.weight_function) > 0
+                or len(self.bias_function) > 0
+            ):
                 return self.forward_comfy_cast_weights(*args, **kwargs)
             else:
                 return super().forward(*args, **kwargs)
@@ -151,10 +193,16 @@ class disable_weight_init:
             else:
                 weight = None
                 bias = None
-            return torch.nn.functional.layer_norm(input, self.normalized_shape, weight, bias, self.eps)
+            return torch.nn.functional.layer_norm(
+                input, self.normalized_shape, weight, bias, self.eps
+            )
 
         def forward(self, *args, **kwargs):
-            if self.comfy_cast_weights or len(self.weight_function) > 0 or len(self.bias_function) > 0:
+            if (
+                self.comfy_cast_weights
+                or len(self.weight_function) > 0
+                or len(self.bias_function) > 0
+            ):
                 return self.forward_comfy_cast_weights(*args, **kwargs)
             else:
                 return super().forward(*args, **kwargs)
@@ -169,11 +217,17 @@ class disable_weight_init:
                 weight, bias = cast_bias_weight(self, input)
             else:
                 weight = None
-            return comfy.rmsnorm.rms_norm(input, weight, self.eps)  # TODO: switch to commented out line when old torch is deprecated
+            return comfy.rmsnorm.rms_norm(
+                input, weight, self.eps
+            )  # TODO: switch to commented out line when old torch is deprecated
             # return torch.nn.functional.rms_norm(input, self.normalized_shape, weight, self.eps)
 
         def forward(self, *args, **kwargs):
-            if self.comfy_cast_weights or len(self.weight_function) > 0 or len(self.bias_function) > 0:
+            if (
+                self.comfy_cast_weights
+                or len(self.weight_function) > 0
+                or len(self.bias_function) > 0
+            ):
                 return self.forward_comfy_cast_weights(*args, **kwargs)
             else:
                 return super().forward(*args, **kwargs)
@@ -185,16 +239,33 @@ class disable_weight_init:
         def forward_comfy_cast_weights(self, input, output_size=None):
             num_spatial_dims = 2
             output_padding = self._output_padding(
-                input, output_size, self.stride, self.padding, self.kernel_size,
-                num_spatial_dims, self.dilation)
+                input,
+                output_size,
+                self.stride,
+                self.padding,
+                self.kernel_size,
+                num_spatial_dims,
+                self.dilation,
+            )
 
             weight, bias = cast_bias_weight(self, input)
             return torch.nn.functional.conv_transpose2d(
-                input, weight, bias, self.stride, self.padding,
-                output_padding, self.groups, self.dilation)
+                input,
+                weight,
+                bias,
+                self.stride,
+                self.padding,
+                output_padding,
+                self.groups,
+                self.dilation,
+            )
 
         def forward(self, *args, **kwargs):
-            if self.comfy_cast_weights or len(self.weight_function) > 0 or len(self.bias_function) > 0:
+            if (
+                self.comfy_cast_weights
+                or len(self.weight_function) > 0
+                or len(self.bias_function) > 0
+            ):
                 return self.forward_comfy_cast_weights(*args, **kwargs)
             else:
                 return super().forward(*args, **kwargs)
@@ -206,16 +277,33 @@ class disable_weight_init:
         def forward_comfy_cast_weights(self, input, output_size=None):
             num_spatial_dims = 1
             output_padding = self._output_padding(
-                input, output_size, self.stride, self.padding, self.kernel_size,
-                num_spatial_dims, self.dilation)
+                input,
+                output_size,
+                self.stride,
+                self.padding,
+                self.kernel_size,
+                num_spatial_dims,
+                self.dilation,
+            )
 
             weight, bias = cast_bias_weight(self, input)
             return torch.nn.functional.conv_transpose1d(
-                input, weight, bias, self.stride, self.padding,
-                output_padding, self.groups, self.dilation)
+                input,
+                weight,
+                bias,
+                self.stride,
+                self.padding,
+                output_padding,
+                self.groups,
+                self.dilation,
+            )
 
         def forward(self, *args, **kwargs):
-            if self.comfy_cast_weights or len(self.weight_function) > 0 or len(self.bias_function) > 0:
+            if (
+                self.comfy_cast_weights
+                or len(self.weight_function) > 0
+                or len(self.bias_function) > 0
+            ):
                 return self.forward_comfy_cast_weights(*args, **kwargs)
             else:
                 return super().forward(*args, **kwargs)
@@ -227,13 +315,28 @@ class disable_weight_init:
 
         def forward_comfy_cast_weights(self, input, out_dtype=None):
             output_dtype = out_dtype
-            if self.weight.dtype == torch.float16 or self.weight.dtype == torch.bfloat16:
+            if (
+                self.weight.dtype == torch.float16
+                or self.weight.dtype == torch.bfloat16
+            ):
                 out_dtype = None
             weight, bias = cast_bias_weight(self, device=input.device, dtype=out_dtype)
-            return torch.nn.functional.embedding(input, weight, self.padding_idx, self.max_norm, self.norm_type, self.scale_grad_by_freq, self.sparse).to(dtype=output_dtype)
+            return torch.nn.functional.embedding(
+                input,
+                weight,
+                self.padding_idx,
+                self.max_norm,
+                self.norm_type,
+                self.scale_grad_by_freq,
+                self.sparse,
+            ).to(dtype=output_dtype)
 
         def forward(self, *args, **kwargs):
-            if self.comfy_cast_weights or len(self.weight_function) > 0 or len(self.bias_function) > 0:
+            if (
+                self.comfy_cast_weights
+                or len(self.weight_function) > 0
+                or len(self.bias_function) > 0
+            ):
                 return self.forward_comfy_cast_weights(*args, **kwargs)
             else:
                 if "out_dtype" in kwargs:
@@ -311,12 +414,30 @@ def fp8_linear(self, input):
             input = input.reshape(-1, input_shape[2]).to(dtype).contiguous()
         else:
             scale_input = scale_input.to(input.device)
-            input = (input * (1.0 / scale_input).to(input_dtype)).reshape(-1, input_shape[2]).to(dtype).contiguous()
+            input = (
+                (input * (1.0 / scale_input).to(input_dtype))
+                .reshape(-1, input_shape[2])
+                .to(dtype)
+                .contiguous()
+            )
 
         if bias is not None:
-            o = torch._scaled_mm(input, w, out_dtype=input_dtype, bias=bias, scale_a=scale_input, scale_b=scale_weight)
+            o = torch._scaled_mm(
+                input,
+                w,
+                out_dtype=input_dtype,
+                bias=bias,
+                scale_a=scale_input,
+                scale_b=scale_weight,
+            )
         else:
-            o = torch._scaled_mm(input, w, out_dtype=input_dtype, scale_a=scale_input, scale_b=scale_weight)
+            o = torch._scaled_mm(
+                input,
+                w,
+                out_dtype=input_dtype,
+                scale_a=scale_input,
+                scale_b=scale_weight,
+            )
 
         if isinstance(o, tuple):
             o = o[0]
@@ -327,6 +448,7 @@ def fp8_linear(self, input):
         return o.reshape((-1, input_shape[1], self.weight.shape[0]))
 
     return None
+
 
 class fp8_ops(manual_cast):
     class Linear(manual_cast.Linear):
@@ -343,24 +465,40 @@ class fp8_ops(manual_cast):
             weight, bias = cast_bias_weight(self, input)
             return torch.nn.functional.linear(input, weight, bias)
 
+
 def scaled_fp8_ops(fp8_matrix_mult=False, scale_input=False, override_dtype=None):
-    logging.info("Using scaled fp8: fp8 matrix mult: {}, scale input: {}".format(fp8_matrix_mult, scale_input))
+    logging.info(
+        "Using scaled fp8: fp8 matrix mult: {}, scale input: {}".format(
+            fp8_matrix_mult, scale_input
+        )
+    )
+
     class scaled_fp8_op(manual_cast):
         class Linear(manual_cast.Linear):
             def __init__(self, *args, **kwargs):
                 if override_dtype is not None:
-                    kwargs['dtype'] = override_dtype
+                    kwargs["dtype"] = override_dtype
                 super().__init__(*args, **kwargs)
 
             def reset_parameters(self):
-                if not hasattr(self, 'scale_weight'):
-                    self.scale_weight = torch.nn.parameter.Parameter(data=torch.ones((), device=self.weight.device, dtype=torch.float32), requires_grad=False)
+                if not hasattr(self, "scale_weight"):
+                    self.scale_weight = torch.nn.parameter.Parameter(
+                        data=torch.ones(
+                            (), device=self.weight.device, dtype=torch.float32
+                        ),
+                        requires_grad=False,
+                    )
 
                 if not scale_input:
                     self.scale_input = None
 
-                if not hasattr(self, 'scale_input'):
-                    self.scale_input = torch.nn.parameter.Parameter(data=torch.ones((), device=self.weight.device, dtype=torch.float32), requires_grad=False)
+                if not hasattr(self, "scale_input"):
+                    self.scale_input = torch.nn.parameter.Parameter(
+                        data=torch.ones(
+                            (), device=self.weight.device, dtype=torch.float32
+                        ),
+                        requires_grad=False,
+                    )
                 return None
 
             def forward_comfy_cast_weights(self, input):
@@ -371,20 +509,43 @@ def scaled_fp8_ops(fp8_matrix_mult=False, scale_input=False, override_dtype=None
 
                 weight, bias = cast_bias_weight(self, input)
 
-                if weight.numel() < input.numel(): #TODO: optimize
-                    return torch.nn.functional.linear(input, weight * self.scale_weight.to(device=weight.device, dtype=weight.dtype), bias)
+                if weight.numel() < input.numel():  # TODO: optimize
+                    return torch.nn.functional.linear(
+                        input,
+                        weight
+                        * self.scale_weight.to(
+                            device=weight.device, dtype=weight.dtype
+                        ),
+                        bias,
+                    )
                 else:
-                    return torch.nn.functional.linear(input * self.scale_weight.to(device=weight.device, dtype=weight.dtype), weight, bias)
+                    return torch.nn.functional.linear(
+                        input
+                        * self.scale_weight.to(
+                            device=weight.device, dtype=weight.dtype
+                        ),
+                        weight,
+                        bias,
+                    )
 
             def convert_weight(self, weight, inplace=False, **kwargs):
                 if inplace:
-                    weight *= self.scale_weight.to(device=weight.device, dtype=weight.dtype)
+                    weight *= self.scale_weight.to(
+                        device=weight.device, dtype=weight.dtype
+                    )
                     return weight
                 else:
-                    return weight * self.scale_weight.to(device=weight.device, dtype=weight.dtype)
+                    return weight * self.scale_weight.to(
+                        device=weight.device, dtype=weight.dtype
+                    )
 
             def set_weight(self, weight, inplace_update=False, seed=None, **kwargs):
-                weight = comfy.float.stochastic_rounding(weight / self.scale_weight.to(device=weight.device, dtype=weight.dtype), self.weight.dtype, seed=seed)
+                weight = comfy.float.stochastic_rounding(
+                    weight
+                    / self.scale_weight.to(device=weight.device, dtype=weight.dtype),
+                    self.weight.dtype,
+                    seed=seed,
+                )
                 if inplace_update:
                     self.weight.data.copy_(weight)
                 else:
@@ -392,14 +553,17 @@ def scaled_fp8_ops(fp8_matrix_mult=False, scale_input=False, override_dtype=None
 
     return scaled_fp8_op
 
+
 CUBLAS_IS_AVAILABLE = False
 try:
     from cublas_ops import CublasLinear
+
     CUBLAS_IS_AVAILABLE = True
 except ImportError:
     pass
 
 if CUBLAS_IS_AVAILABLE:
+
     class cublas_ops(disable_weight_init):
         class Linear(CublasLinear, disable_weight_init.Linear):
             def reset_parameters(self):
@@ -411,23 +575,37 @@ if CUBLAS_IS_AVAILABLE:
             def forward(self, *args, **kwargs):
                 return super().forward(*args, **kwargs)
 
-def pick_operations(weight_dtype, compute_dtype, load_device=None, disable_fast_fp8=False, fp8_optimizations=False, scaled_fp8=None):
+
+def pick_operations(
+    weight_dtype,
+    compute_dtype,
+    load_device=None,
+    disable_fast_fp8=False,
+    fp8_optimizations=False,
+    scaled_fp8=None,
+):
     fp8_compute = comfy.model_management.supports_fp8_compute(load_device)
     if scaled_fp8 is not None:
-        return scaled_fp8_ops(fp8_matrix_mult=fp8_compute and fp8_optimizations, scale_input=fp8_optimizations, override_dtype=scaled_fp8)
+        return scaled_fp8_ops(
+            fp8_matrix_mult=fp8_compute and fp8_optimizations,
+            scale_input=fp8_optimizations,
+            override_dtype=scaled_fp8,
+        )
 
     if (
-        fp8_compute and
-        (fp8_optimizations or PerformanceFeature.Fp8MatrixMultiplication in args.fast) and
-        not disable_fast_fp8
+        fp8_compute
+        and (
+            fp8_optimizations or PerformanceFeature.Fp8MatrixMultiplication in args.fast
+        )
+        and not disable_fast_fp8
     ):
         return fp8_ops
 
     if (
-        PerformanceFeature.CublasOps in args.fast and
-        CUBLAS_IS_AVAILABLE and
-        weight_dtype == torch.float16 and
-        (compute_dtype == torch.float16 or compute_dtype is None)
+        PerformanceFeature.CublasOps in args.fast
+        and CUBLAS_IS_AVAILABLE
+        and weight_dtype == torch.float16
+        and (compute_dtype == torch.float16 or compute_dtype is None)
     ):
         logging.info("Using cublas ops")
         return cublas_ops

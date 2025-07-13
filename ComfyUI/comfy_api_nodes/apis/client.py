@@ -101,7 +101,7 @@ import json
 import requests
 from urllib.parse import urljoin, urlparse
 from pydantic import BaseModel, Field
-import uuid # For generating unique operation IDs
+import uuid  # For generating unique operation IDs
 
 from server import PromptServer
 from comfy.cli_args import args
@@ -117,16 +117,19 @@ PROGRESS_BAR_MAX = 100
 
 class NetworkError(Exception):
     """Base exception for network-related errors with diagnostic information."""
+
     pass
 
 
 class LocalNetworkError(NetworkError):
     """Exception raised when local network connectivity issues are detected."""
+
     pass
 
 
 class ApiServerError(NetworkError):
     """Exception raised when the API server is unreachable but internet is working."""
+
     pass
 
 
@@ -206,7 +209,7 @@ class ApiClient:
         data: Dict[str, Any],
         files: Dict[str, Any],
         headers: Optional[Dict[str, str]] = None,
-        multipart_parser = None,
+        multipart_parser=None,
     ) -> Dict[str, Any]:
         headers = headers or {}
         # Let requests handle the Content-Type header for multipart/form-data
@@ -251,7 +254,9 @@ class ApiClient:
         if self.auth_token:
             # Special case for Ideogram API
             if "api.ideogram.ai" in self.base_url:
-                print(f"[DEBUG] Setting Ideogram Api-Key header with token: {self.auth_token}")
+                print(
+                    f"[DEBUG] Setting Ideogram Api-Key header with token: {self.auth_token}"
+                )
                 headers["Api-Key"] = self.auth_token
             else:
                 # Default behavior for DALL-E and others
@@ -275,15 +280,15 @@ class ApiClient:
             "internet_accessible": False,
             "api_accessible": False,
             "is_local_issue": False,
-            "is_api_issue": False
+            "is_api_issue": False,
         }
 
         # First check basic internet connectivity using a reliable external site
         try:
             # Use a reliable external domain for checking basic connectivity
-            check_response = requests.get("https://www.google.com",
-                                         timeout=5.0,
-                                         verify=self.verify_ssl)
+            check_response = requests.get(
+                "https://www.google.com", timeout=5.0, verify=self.verify_ssl
+            )
             if check_response.status_code < 500:
                 results["internet_accessible"] = True
         except (requests.RequestException, socket.error):
@@ -298,7 +303,9 @@ class ApiClient:
             api_base = f"{parsed_url.scheme}://{parsed_url.netloc}"
 
             # Try to reach the API domain
-            api_response = requests.get(f"{api_base}/health", timeout=5.0, verify=self.verify_ssl)
+            api_response = requests.get(
+                f"{api_base}/health", timeout=5.0, verify=self.verify_ssl
+            )
             if api_response.status_code < 500:
                 results["api_accessible"] = True
             else:
@@ -361,16 +368,27 @@ class ApiClient:
                         files[key] = (None, str(value))  # Convert all values to strings
                 data = None  # Clear data since we're using files
             print(f"[DEBUG] Ideogram files after conversion: {files}")
-            request_args = self._create_form_data_args(data={}, files=files, headers=headers)
+            request_args = self._create_form_data_args(
+                data={}, files=files, headers=headers
+            )
             print(f"[DEBUG] Final request args for Ideogram: {request_args}")
         else:
             # Normal JSON handling for other APIs
             if content_type == "multipart/form-data":
-                request_args = self._create_form_data_args(data=data, files=files, headers=headers, multipart_parser=multipart_parser)
+                request_args = self._create_form_data_args(
+                    data=data,
+                    files=files,
+                    headers=headers,
+                    multipart_parser=multipart_parser,
+                )
             elif content_type == "application/x-www-form-urlencoded":
-                request_args = self._create_urlencoded_form_data_args(data=data, headers=headers)
+                request_args = self._create_urlencoded_form_data_args(
+                    data=data, headers=headers
+                )
             else:
-                request_args = self._create_json_payload_args(data=data, headers=headers)
+                request_args = self._create_json_payload_args(
+                    data=data, headers=headers
+                )
 
         if params:
             request_args["params"] = params
@@ -382,7 +400,9 @@ class ApiClient:
             request_url=url,
             request_headers=request_args.get("headers", {}),
             request_params=request_args.get("params", {}),
-            request_data=request_args.get("data") if request_args.get("data") is not None else "[form-data or other]"
+            request_data=request_args.get("data")
+            if request_args.get("data") is not None
+            else "[form-data or other]",
         )
 
         try:
@@ -391,7 +411,7 @@ class ApiClient:
                 url,
                 timeout=self.timeout,
                 verify=self.verify_ssl,
-                **request_args
+                **request_args,
             )
             response.raise_for_status()
 
@@ -401,15 +421,15 @@ class ApiClient:
                 # Attempt to parse JSON for prettier logging, fallback to raw content
                 response_content_to_log = response.json()
             except json.JSONDecodeError:
-                pass # Keep as bytes/str if not JSON
+                pass  # Keep as bytes/str if not JSON
 
             request_logger.log_request_response(
                 operation_id=operation_id,
-                request_method=method, # Pass request details again for context in log
+                request_method=method,  # Pass request details again for context in log
                 request_url=url,
                 response_status_code=response.status_code,
                 response_headers=dict(response.headers),
-                response_content=response_content_to_log
+                response_content=response_content_to_log,
             )
 
             return response.json()
@@ -419,7 +439,7 @@ class ApiClient:
                 operation_id=operation_id,
                 request_method=method,
                 request_url=url,
-                error_message=error_message
+                error_message=error_message,
             )
             # Only perform connectivity check if we've exhausted all retries
             if retry_count >= self.max_retries:
@@ -439,7 +459,7 @@ class ApiClient:
 
             # If we haven't exhausted retries yet, retry the request
             if retry_count < self.max_retries:
-                delay = self.retry_delay * (self.retry_backoff_factor ** retry_count)
+                delay = self.retry_delay * (self.retry_backoff_factor**retry_count)
                 logging.warning(
                     f"Connection error: {str(e)}. "
                     f"Retrying in {delay:.2f}s ({retry_count + 1}/{self.max_retries})"
@@ -463,10 +483,11 @@ class ApiClient:
                 f"Unable to connect to the API server after {self.max_retries} attempts. "
                 f"Please check your internet connection or try again later."
             )
-            request_logger.log_request_response( # Log final failure
+            request_logger.log_request_response(  # Log final failure
                 operation_id=operation_id,
-                request_method=method, request_url=url,
-                error_message=final_error_message
+                request_method=method,
+                request_url=url,
+                error_message=final_error_message,
             )
             raise Exception(final_error_message) from e
 
@@ -474,12 +495,13 @@ class ApiClient:
             error_message = f"Timeout: {str(e)}"
             request_logger.log_request_response(
                 operation_id=operation_id,
-                request_method=method, request_url=url,
-                error_message=error_message
+                request_method=method,
+                request_url=url,
+                error_message=error_message,
             )
             # Retry timeouts if we haven't exhausted retries
             if retry_count < self.max_retries:
-                delay = self.retry_delay * (self.retry_backoff_factor ** retry_count)
+                delay = self.retry_delay * (self.retry_backoff_factor**retry_count)
                 logging.warning(
                     f"Request timed out. "
                     f"Retrying in {delay:.2f}s ({retry_count + 1}/{self.max_retries})"
@@ -500,10 +522,11 @@ class ApiClient:
                 f"Request timed out after {self.timeout} seconds and {self.max_retries} retry attempts. "
                 f"The server might be experiencing high load or the operation is taking longer than expected."
             )
-            request_logger.log_request_response( # Log final failure
+            request_logger.log_request_response(  # Log final failure
                 operation_id=operation_id,
-                request_method=method, request_url=url,
-                error_message=final_error_message
+                request_method=method,
+                request_url=url,
+                error_message=final_error_message,
             )
             raise Exception(final_error_message) from e
 
@@ -518,49 +541,72 @@ class ApiClient:
                 except json.JSONDecodeError:
                     pass
 
-
             # Try to extract detailed error message from JSON response for user display
             # but log the full error content.
             user_display_error_message = original_error_message
 
             try:
-                if hasattr(e, "response") and e.response is not None and e.response.content:
+                if (
+                    hasattr(e, "response")
+                    and e.response is not None
+                    and e.response.content
+                ):
                     error_json = e.response.json()
                     if "error" in error_json and "message" in error_json["error"]:
-                        user_display_error_message = f"API Error: {error_json['error']['message']}"
+                        user_display_error_message = (
+                            f"API Error: {error_json['error']['message']}"
+                        )
                         if "type" in error_json["error"]:
-                            user_display_error_message += f" (Type: {error_json['error']['type']})"
-                    elif isinstance(error_json, dict): # Handle cases where error is just a JSON dict
-                        user_display_error_message = f"API Error: {json.dumps(error_json)}"
-                    else: # Non-dict JSON error
+                            user_display_error_message += (
+                                f" (Type: {error_json['error']['type']})"
+                            )
+                    elif isinstance(
+                        error_json, dict
+                    ):  # Handle cases where error is just a JSON dict
+                        user_display_error_message = (
+                            f"API Error: {json.dumps(error_json)}"
+                        )
+                    else:  # Non-dict JSON error
                         user_display_error_message = f"API Error: {str(error_json)}"
             except json.JSONDecodeError:
                 # If not JSON, use the raw content if it's not too long, or a summary
-                if hasattr(e, "response") and e.response is not None and e.response.content:
-                    raw_content = e.response.content.decode(errors='ignore')
-                    if len(raw_content) < 200: # Arbitrary limit for display
+                if (
+                    hasattr(e, "response")
+                    and e.response is not None
+                    and e.response.content
+                ):
+                    raw_content = e.response.content.decode(errors="ignore")
+                    if len(raw_content) < 200:  # Arbitrary limit for display
                         user_display_error_message = f"API Error (raw): {raw_content}"
                     else:
-                        user_display_error_message = f"API Error (raw, status {status_code})"
+                        user_display_error_message = (
+                            f"API Error (raw, status {status_code})"
+                        )
 
             request_logger.log_request_response(
                 operation_id=operation_id,
-                request_method=method, request_url=url,
+                request_method=method,
+                request_url=url,
                 response_status_code=status_code,
-                response_headers=dict(e.response.headers) if hasattr(e, "response") and e.response is not None else None,
+                response_headers=dict(e.response.headers)
+                if hasattr(e, "response") and e.response is not None
+                else None,
                 response_content=error_content_for_log,
-                error_message=original_error_message # Log the original exception string as error
+                error_message=original_error_message,  # Log the original exception string as error
             )
 
-            logging.debug(f"[DEBUG] API Error: {user_display_error_message} (Status: {status_code})")
+            logging.debug(
+                f"[DEBUG] API Error: {user_display_error_message} (Status: {status_code})"
+            )
             if hasattr(e, "response") and e.response is not None and e.response.content:
                 logging.debug(f"[DEBUG] Response content: {e.response.content}")
 
             # Retry if the status code is in our retry list and we haven't exhausted retries
-            if (status_code in self.retry_status_codes and
-                retry_count < self.max_retries):
-
-                delay = self.retry_delay * (self.retry_backoff_factor ** retry_count)
+            if (
+                status_code in self.retry_status_codes
+                and retry_count < self.max_retries
+            ):
+                delay = self.retry_delay * (self.retry_backoff_factor**retry_count)
                 logging.warning(
                     f"HTTP error {status_code}. "
                     f"Retrying in {delay:.2f}s ({retry_count + 1}/{self.max_retries})"
@@ -580,16 +626,22 @@ class ApiClient:
 
             # Specific error messages for common status codes for user display
             if status_code == 401:
-                user_display_error_message = "Unauthorized: Please login first to use this node."
+                user_display_error_message = (
+                    "Unauthorized: Please login first to use this node."
+                )
             elif status_code == 402:
                 user_display_error_message = "Payment Required: Please add credits to your account to use this node."
             elif status_code == 409:
                 user_display_error_message = "There is a problem with your account. Please contact support@comfy.org."
             elif status_code == 429:
-                user_display_error_message = "Rate Limit Exceeded: Please try again later."
+                user_display_error_message = (
+                    "Rate Limit Exceeded: Please try again later."
+                )
             # else, user_display_error_message remains as parsed from response or original HTTPError string
 
-            raise Exception(user_display_error_message) # Raise with the user-friendly message
+            raise Exception(
+                user_display_error_message
+            )  # Raise with the user-friendly message
 
     def check_auth(self, auth_token, comfy_api_key):
         """Verify that an auth token is present or comfy_api_key is present"""
@@ -628,11 +680,13 @@ class ApiClient:
             with open(file, "rb") as f:
                 data = f.read()
         else:
-            raise ValueError("File must be either a BytesIO object or a file path string")
+            raise ValueError(
+                "File must be either a BytesIO object or a file path string"
+            )
 
         # Try the upload with retries
         last_exception = None
-        operation_id = f"upload_{upload_url.split('/')[-1]}_{uuid.uuid4().hex[:8]}" # Simplified ID for uploads
+        operation_id = f"upload_{upload_url.split('/')[-1]}_{uuid.uuid4().hex[:8]}"  # Simplified ID for uploads
 
         # Log initial attempt (without full file data for brevity)
         request_logger.log_request_response(
@@ -640,7 +694,7 @@ class ApiClient:
             request_method="PUT",
             request_url=upload_url,
             request_headers=headers,
-            request_data=f"[File data of type {content_type or 'unknown'}, size {len(data)} bytes]"
+            request_data=f"[File data of type {content_type or 'unknown'}, size {len(data)} bytes]",
         )
 
         for retry_attempt in range(max_retries + 1):
@@ -649,21 +703,26 @@ class ApiClient:
                 response.raise_for_status()
                 request_logger.log_request_response(
                     operation_id=operation_id,
-                    request_method="PUT", request_url=upload_url, # For context
+                    request_method="PUT",
+                    request_url=upload_url,  # For context
                     response_status_code=response.status_code,
                     response_headers=dict(response.headers),
-                    response_content="File uploaded successfully." # Or response.text if available
+                    response_content="File uploaded successfully.",  # Or response.text if available
                 )
                 return response
 
-            except (requests.ConnectionError, requests.Timeout, requests.HTTPError) as e:
+            except (
+                requests.ConnectionError,
+                requests.Timeout,
+                requests.HTTPError,
+            ) as e:
                 last_exception = e
                 error_message_for_log = f"{type(e).__name__}: {str(e)}"
                 response_content_for_log = None
                 status_code_for_log = None
                 headers_for_log = None
 
-                if hasattr(e, 'response') and e.response is not None:
+                if hasattr(e, "response") and e.response is not None:
                     status_code_for_log = e.response.status_code
                     headers_for_log = dict(e.response.headers)
                     try:
@@ -671,55 +730,63 @@ class ApiClient:
                     except json.JSONDecodeError:
                         response_content_for_log = e.response.content
 
-
                 request_logger.log_request_response(
                     operation_id=operation_id,
-                    request_method="PUT", request_url=upload_url,
+                    request_method="PUT",
+                    request_url=upload_url,
                     response_status_code=status_code_for_log,
                     response_headers=headers_for_log,
                     response_content=response_content_for_log,
-                    error_message=error_message_for_log
+                    error_message=error_message_for_log,
                 )
 
                 if retry_attempt < max_retries:
-                    delay = retry_delay * (retry_backoff_factor ** retry_attempt)
+                    delay = retry_delay * (retry_backoff_factor**retry_attempt)
                     logging.warning(
                         f"File upload failed: {str(e)}. "
                         f"Retrying in {delay:.2f}s ({retry_attempt + 1}/{max_retries})"
                     )
                     time.sleep(delay)
                 else:
-                    break # Max retries reached
+                    break  # Max retries reached
 
         # If we've exhausted all retries, determine the final error type and raise
         final_error_message = f"Failed to upload file after {max_retries + 1} attempts. Error: {str(last_exception)}"
         try:
             # Check basic internet connectivity
-            check_response = requests.get("https://www.google.com", timeout=5.0, verify=True) # Assuming verify=True is desired
-            if check_response.status_code >= 500: # Google itself has an issue (rare)
-                 final_error_message = (f"Failed to upload file. Internet connectivity check to Google failed "
-                                       f"(status {check_response.status_code}). Original error: {str(last_exception)}")
-                 # Not raising LocalNetworkError here as Google itself might be down.
+            check_response = requests.get(
+                "https://www.google.com", timeout=5.0, verify=True
+            )  # Assuming verify=True is desired
+            if check_response.status_code >= 500:  # Google itself has an issue (rare)
+                final_error_message = (
+                    f"Failed to upload file. Internet connectivity check to Google failed "
+                    f"(status {check_response.status_code}). Original error: {str(last_exception)}"
+                )
+                # Not raising LocalNetworkError here as Google itself might be down.
             # If Google is reachable, the issue is likely with the upload server or a more specific local problem
             # not caught by a simple Google ping (e.g., DNS for the specific upload URL, firewall).
             # The original last_exception is probably most relevant.
 
         except (requests.RequestException, socket.error) as conn_check_exc:
             # Could not reach Google, likely a local network issue
-            final_error_message = (f"Failed to upload file due to network connectivity issues "
-                                   f"(cannot reach Google: {str(conn_check_exc)}). "
-                                   f"Original upload error: {str(last_exception)}")
-            request_logger.log_request_response( # Log final failure reason
+            final_error_message = (
+                f"Failed to upload file due to network connectivity issues "
+                f"(cannot reach Google: {str(conn_check_exc)}). "
+                f"Original upload error: {str(last_exception)}"
+            )
+            request_logger.log_request_response(  # Log final failure reason
                 operation_id=operation_id,
-                request_method="PUT", request_url=upload_url,
-                error_message=final_error_message
+                request_method="PUT",
+                request_url=upload_url,
+                error_message=final_error_message,
             )
             raise LocalNetworkError(final_error_message) from last_exception
 
-        request_logger.log_request_response( # Log final failure reason if not LocalNetworkError
+        request_logger.log_request_response(  # Log final failure reason if not LocalNetworkError
             operation_id=operation_id,
-            request_method="PUT", request_url=upload_url,
-            error_message=final_error_message
+            request_method="PUT",
+            request_url=upload_url,
+            error_message=final_error_message,
         )
         raise Exception(final_error_message) from last_exception
 
@@ -764,7 +831,7 @@ class SynchronousOperation(Generic[T, R]):
         api_base: str | None = None,
         auth_token: Optional[str] = None,
         comfy_api_key: Optional[str] = None,
-        auth_kwargs: Optional[Dict[str,str]] = None,
+        auth_kwargs: Optional[Dict[str, str]] = None,
         timeout: float = 604800.0,
         verify_ssl: bool = True,
         content_type: str = "application/json",
@@ -834,7 +901,7 @@ class SynchronousOperation(Generic[T, R]):
                 params=self.endpoint.query_params,
                 files=self.files,
                 content_type=self.content_type,
-                multipart_parser=self.multipart_parser
+                multipart_parser=self.multipart_parser,
             )
 
             # Debug log for response
@@ -897,7 +964,7 @@ class PollingOperation(Generic[T, R]):
         api_base: str | None = None,
         auth_token: Optional[str] = None,
         comfy_api_key: Optional[str] = None,
-        auth_kwargs: Optional[Dict[str,str]] = None,
+        auth_kwargs: Optional[Dict[str, str]] = None,
         poll_interval: float = 5.0,
         max_poll_attempts: int = 120,  # Default max polling attempts (10 minutes with 5s interval)
         max_retries: int = 3,  # Max retries per individual API call
@@ -1000,7 +1067,9 @@ class PollingOperation(Generic[T, R]):
         """Poll until the task is complete"""
         poll_count = 0
         consecutive_errors = 0
-        max_consecutive_errors = min(5, self.max_retries * 2)  # Limit consecutive errors
+        max_consecutive_errors = min(
+            5, self.max_retries * 2
+        )  # Limit consecutive errors
 
         if self.progress_extractor:
             progress = utils.ProgressBar(PROGRESS_BAR_MAX)
@@ -1096,7 +1165,10 @@ class PollingOperation(Generic[T, R]):
             except Exception as e:
                 # For other errors, increment count and potentially abort
                 consecutive_errors += 1
-                if consecutive_errors >= max_consecutive_errors or status == TaskStatus.FAILED:
+                if (
+                    consecutive_errors >= max_consecutive_errors
+                    or status == TaskStatus.FAILED
+                ):
                     raise Exception(
                         f"Polling aborted after {consecutive_errors} consecutive errors: {str(e)}"
                     ) from e

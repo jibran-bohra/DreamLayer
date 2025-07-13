@@ -7,6 +7,7 @@ import folder_paths
 # Get the logger instance
 logger = logging.getLogger(__name__)
 
+
 def get_log_directory():
     """
     Ensures the API log directory exists within ComfyUI's temp directory
@@ -22,19 +23,21 @@ def get_log_directory():
         return base_temp_dir
     return log_dir
 
+
 def _format_data_for_logging(data):
     """Helper to format data (dict, str, bytes) for logging."""
     if isinstance(data, bytes):
         try:
-            return data.decode('utf-8')  # Try to decode as text
+            return data.decode("utf-8")  # Try to decode as text
         except UnicodeDecodeError:
             return f"[Binary data of length {len(data)} bytes]"
     elif isinstance(data, (dict, list)):
         try:
             return json.dumps(data, indent=2, ensure_ascii=False)
         except TypeError:
-            return str(data) # Fallback for non-serializable objects
+            return str(data)  # Fallback for non-serializable objects
     return str(data)
+
 
 def log_request_response(
     operation_id: str,
@@ -46,7 +49,7 @@ def log_request_response(
     response_status_code: int | None = None,
     response_headers: dict | None = None,
     response_content: any = None,
-    error_message: str | None = None
+    error_message: str | None = None,
 ):
     """
     Logs API request and response details to a file in the temp/api_logs directory.
@@ -87,17 +90,20 @@ def log_request_response(
     except Exception as e:
         logger.error(f"Error writing API log to {filepath}: {e}")
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     # Example usage (for testing the logger directly)
     logger.setLevel(logging.DEBUG)
     # Mock folder_paths for direct execution if not running within ComfyUI full context
-    if not hasattr(folder_paths, 'get_temp_directory'):
+    if not hasattr(folder_paths, "get_temp_directory"):
+
         class MockFolderPaths:
             def get_temp_directory(self):
                 # Create a local temp dir for testing if needed
-                p = os.path.join(os.path.dirname(__file__), 'temp_test_logs')
+                p = os.path.join(os.path.dirname(__file__), "temp_test_logs")
                 os.makedirs(p, exist_ok=True)
                 return p
+
         folder_paths = MockFolderPaths()
 
     log_request_response(
@@ -107,19 +113,19 @@ if __name__ == '__main__':
         request_headers={"Authorization": "Bearer testtoken"},
         request_params={"param1": "value1"},
         response_status_code=200,
-        response_content={"message": "Success!"}
+        response_content={"message": "Success!"},
     )
     log_request_response(
         operation_id="test_operation_post_error",
         request_method="POST",
         request_url="https://api.example.com/submit",
         request_data={"key": "value", "nested": {"num": 123}},
-        error_message="Connection timed out"
+        error_message="Connection timed out",
     )
     log_request_response(
         operation_id="test_binary_response",
         request_method="GET",
         request_url="https://api.example.com/image.png",
         response_status_code=200,
-        response_content=b'\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR...' # Sample binary data
+        response_content=b"\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR...",  # Sample binary data
     )

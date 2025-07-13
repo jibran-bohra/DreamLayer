@@ -3,6 +3,7 @@ Pika x ComfyUI API Nodes
 
 Pika API docs: https://pika-827374fb.mintlify.app/api-reference
 """
+
 from __future__ import annotations
 
 import io
@@ -150,7 +151,7 @@ class PikaNodeBase(ComfyNodeABC):
                 response.url if hasattr(response, "url") else None
             ),
             node_id=node_id,
-            estimated_duration=60
+            estimated_duration=60,
         )
         return polling_operation.execute()
 
@@ -251,7 +252,9 @@ class PikaImageToVideoV2_2(PikaNodeBase):
             auth_kwargs=kwargs,
         )
 
-        return self.execute_task(initial_operation, auth_kwargs=kwargs, node_id=unique_id)
+        return self.execute_task(
+            initial_operation, auth_kwargs=kwargs, node_id=unique_id
+        )
 
 
 class PikaTextToVideoNodeV2_2(PikaNodeBase):
@@ -311,7 +314,9 @@ class PikaTextToVideoNodeV2_2(PikaNodeBase):
             content_type="application/x-www-form-urlencoded",
         )
 
-        return self.execute_task(initial_operation, auth_kwargs=kwargs, node_id=unique_id)
+        return self.execute_task(
+            initial_operation, auth_kwargs=kwargs, node_id=unique_id
+        )
 
 
 class PikaScenesV2_2(PikaNodeBase):
@@ -420,7 +425,9 @@ class PikaScenesV2_2(PikaNodeBase):
             auth_kwargs=kwargs,
         )
 
-        return self.execute_task(initial_operation, auth_kwargs=kwargs, node_id=unique_id)
+        return self.execute_task(
+            initial_operation, auth_kwargs=kwargs, node_id=unique_id
+        )
 
 
 class PikAdditionsNode(PikaNodeBase):
@@ -506,7 +513,9 @@ class PikAdditionsNode(PikaNodeBase):
             auth_kwargs=kwargs,
         )
 
-        return self.execute_task(initial_operation, auth_kwargs=kwargs, node_id=unique_id)
+        return self.execute_task(
+            initial_operation, auth_kwargs=kwargs, node_id=unique_id
+        )
 
 
 class PikaSwapsNode(PikaNodeBase):
@@ -613,7 +622,9 @@ class PikaSwapsNode(PikaNodeBase):
             auth_kwargs=kwargs,
         )
 
-        return self.execute_task(initial_operation, auth_kwargs=kwargs, node_id=unique_id)
+        return self.execute_task(
+            initial_operation, auth_kwargs=kwargs, node_id=unique_id
+        )
 
 
 class PikaffectsNode(PikaNodeBase):
@@ -674,7 +685,6 @@ class PikaffectsNode(PikaNodeBase):
         unique_id: str,
         **kwargs,
     ) -> tuple[VideoFromFile]:
-
         initial_operation = SynchronousOperation(
             endpoint=ApiEndpoint(
                 path=PATH_PIKAFFECTS,
@@ -693,7 +703,9 @@ class PikaffectsNode(PikaNodeBase):
             auth_kwargs=kwargs,
         )
 
-        return self.execute_task(initial_operation, auth_kwargs=kwargs, node_id=unique_id)
+        return self.execute_task(
+            initial_operation, auth_kwargs=kwargs, node_id=unique_id
+        )
 
 
 class PikaStartEndFrameNode2_2(PikaNodeBase):
@@ -730,7 +742,6 @@ class PikaStartEndFrameNode2_2(PikaNodeBase):
         unique_id: str,
         **kwargs,
     ) -> tuple[VideoFromFile]:
-
         pika_files = [
             (
                 "keyFrames",
@@ -758,7 +769,9 @@ class PikaStartEndFrameNode2_2(PikaNodeBase):
             auth_kwargs=kwargs,
         )
 
-        return self.execute_task(initial_operation, auth_kwargs=kwargs, node_id=unique_id)
+        return self.execute_task(
+            initial_operation, auth_kwargs=kwargs, node_id=unique_id
+        )
 
 
 NODE_CLASS_MAPPINGS = {

@@ -25,7 +25,14 @@ class StringMultiline(ComfyNodeABC):
     @classmethod
     def INPUT_TYPES(cls) -> InputTypeDict:
         return {
-            "required": {"value": (IO.STRING, {"multiline": True,},)},
+            "required": {
+                "value": (
+                    IO.STRING,
+                    {
+                        "multiline": True,
+                    },
+                )
+            },
         }
 
     RETURN_TYPES = (IO.STRING,)
@@ -40,7 +47,16 @@ class Int(ComfyNodeABC):
     @classmethod
     def INPUT_TYPES(cls) -> InputTypeDict:
         return {
-            "required": {"value": (IO.INT, {"min": -sys.maxsize, "max": sys.maxsize, "control_after_generate": True})},
+            "required": {
+                "value": (
+                    IO.INT,
+                    {
+                        "min": -sys.maxsize,
+                        "max": sys.maxsize,
+                        "control_after_generate": True,
+                    },
+                )
+            },
         }
 
     RETURN_TYPES = (IO.INT,)
@@ -55,7 +71,9 @@ class Float(ComfyNodeABC):
     @classmethod
     def INPUT_TYPES(cls) -> InputTypeDict:
         return {
-            "required": {"value": (IO.FLOAT, {"min": -sys.maxsize, "max": sys.maxsize})},
+            "required": {
+                "value": (IO.FLOAT, {"min": -sys.maxsize, "max": sys.maxsize})
+            },
         }
 
     RETURN_TYPES = (IO.FLOAT,)

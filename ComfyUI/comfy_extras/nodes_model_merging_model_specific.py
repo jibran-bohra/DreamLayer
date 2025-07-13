@@ -1,11 +1,12 @@
 import comfy_extras.nodes_model_merging
 
+
 class ModelMergeSD1(comfy_extras.nodes_model_merging.ModelMergeBlocks):
     CATEGORY = "advanced/model_merging/model_specific"
+
     @classmethod
     def INPUT_TYPES(s):
-        arg_dict = { "model1": ("MODEL",),
-                              "model2": ("MODEL",)}
+        arg_dict = {"model1": ("MODEL",), "model2": ("MODEL",)}
 
         argument = ("FLOAT", {"default": 1.0, "min": 0.0, "max": 1.0, "step": 0.01})
 
@@ -31,8 +32,7 @@ class ModelMergeSDXL(comfy_extras.nodes_model_merging.ModelMergeBlocks):
 
     @classmethod
     def INPUT_TYPES(s):
-        arg_dict = { "model1": ("MODEL",),
-                              "model2": ("MODEL",)}
+        arg_dict = {"model1": ("MODEL",), "model2": ("MODEL",)}
 
         argument = ("FLOAT", {"default": 1.0, "min": 0.0, "max": 1.0, "step": 0.01})
 
@@ -52,13 +52,13 @@ class ModelMergeSDXL(comfy_extras.nodes_model_merging.ModelMergeBlocks):
 
         return {"required": arg_dict}
 
+
 class ModelMergeSD3_2B(comfy_extras.nodes_model_merging.ModelMergeBlocks):
     CATEGORY = "advanced/model_merging/model_specific"
 
     @classmethod
     def INPUT_TYPES(s):
-        arg_dict = { "model1": ("MODEL",),
-                              "model2": ("MODEL",)}
+        arg_dict = {"model1": ("MODEL",), "model2": ("MODEL",)}
 
         argument = ("FLOAT", {"default": 1.0, "min": 0.0, "max": 1.0, "step": 0.01})
 
@@ -81,8 +81,7 @@ class ModelMergeAuraflow(comfy_extras.nodes_model_merging.ModelMergeBlocks):
 
     @classmethod
     def INPUT_TYPES(s):
-        arg_dict = { "model1": ("MODEL",),
-                              "model2": ("MODEL",)}
+        arg_dict = {"model1": ("MODEL",), "model2": ("MODEL",)}
 
         argument = ("FLOAT", {"default": 1.0, "min": 0.0, "max": 1.0, "step": 0.01})
 
@@ -103,13 +102,13 @@ class ModelMergeAuraflow(comfy_extras.nodes_model_merging.ModelMergeBlocks):
 
         return {"required": arg_dict}
 
+
 class ModelMergeFlux1(comfy_extras.nodes_model_merging.ModelMergeBlocks):
     CATEGORY = "advanced/model_merging/model_specific"
 
     @classmethod
     def INPUT_TYPES(s):
-        arg_dict = { "model1": ("MODEL",),
-                              "model2": ("MODEL",)}
+        arg_dict = {"model1": ("MODEL",), "model2": ("MODEL",)}
 
         argument = ("FLOAT", {"default": 1.0, "min": 0.0, "max": 1.0, "step": 0.01})
 
@@ -129,13 +128,13 @@ class ModelMergeFlux1(comfy_extras.nodes_model_merging.ModelMergeBlocks):
 
         return {"required": arg_dict}
 
+
 class ModelMergeSD35_Large(comfy_extras.nodes_model_merging.ModelMergeBlocks):
     CATEGORY = "advanced/model_merging/model_specific"
 
     @classmethod
     def INPUT_TYPES(s):
-        arg_dict = { "model1": ("MODEL",),
-                              "model2": ("MODEL",)}
+        arg_dict = {"model1": ("MODEL",), "model2": ("MODEL",)}
 
         argument = ("FLOAT", {"default": 1.0, "min": 0.0, "max": 1.0, "step": 0.01})
 
@@ -152,13 +151,13 @@ class ModelMergeSD35_Large(comfy_extras.nodes_model_merging.ModelMergeBlocks):
 
         return {"required": arg_dict}
 
+
 class ModelMergeMochiPreview(comfy_extras.nodes_model_merging.ModelMergeBlocks):
     CATEGORY = "advanced/model_merging/model_specific"
 
     @classmethod
     def INPUT_TYPES(s):
-        arg_dict = { "model1": ("MODEL",),
-                              "model2": ("MODEL",)}
+        arg_dict = {"model1": ("MODEL",), "model2": ("MODEL",)}
 
         argument = ("FLOAT", {"default": 1.0, "min": 0.0, "max": 1.0, "step": 0.01})
 
@@ -174,13 +173,13 @@ class ModelMergeMochiPreview(comfy_extras.nodes_model_merging.ModelMergeBlocks):
 
         return {"required": arg_dict}
 
+
 class ModelMergeLTXV(comfy_extras.nodes_model_merging.ModelMergeBlocks):
     CATEGORY = "advanced/model_merging/model_specific"
 
     @classmethod
     def INPUT_TYPES(s):
-        arg_dict = { "model1": ("MODEL",),
-                              "model2": ("MODEL",)}
+        arg_dict = {"model1": ("MODEL",), "model2": ("MODEL",)}
 
         argument = ("FLOAT", {"default": 1.0, "min": 0.0, "max": 1.0, "step": 0.01})
 
@@ -196,13 +195,13 @@ class ModelMergeLTXV(comfy_extras.nodes_model_merging.ModelMergeBlocks):
 
         return {"required": arg_dict}
 
+
 class ModelMergeCosmos7B(comfy_extras.nodes_model_merging.ModelMergeBlocks):
     CATEGORY = "advanced/model_merging/model_specific"
 
     @classmethod
     def INPUT_TYPES(s):
-        arg_dict = { "model1": ("MODEL",),
-                              "model2": ("MODEL",)}
+        arg_dict = {"model1": ("MODEL",), "model2": ("MODEL",)}
 
         argument = ("FLOAT", {"default": 1.0, "min": 0.0, "max": 1.0, "step": 0.01})
 
@@ -211,7 +210,6 @@ class ModelMergeCosmos7B(comfy_extras.nodes_model_merging.ModelMergeBlocks):
         arg_dict["x_embedder."] = argument
         arg_dict["t_embedder."] = argument
         arg_dict["affline_norm."] = argument
-
 
         for i in range(28):
             arg_dict["blocks.block{}.".format(i)] = argument
@@ -220,13 +218,13 @@ class ModelMergeCosmos7B(comfy_extras.nodes_model_merging.ModelMergeBlocks):
 
         return {"required": arg_dict}
 
+
 class ModelMergeCosmos14B(comfy_extras.nodes_model_merging.ModelMergeBlocks):
     CATEGORY = "advanced/model_merging/model_specific"
 
     @classmethod
     def INPUT_TYPES(s):
-        arg_dict = { "model1": ("MODEL",),
-                              "model2": ("MODEL",)}
+        arg_dict = {"model1": ("MODEL",), "model2": ("MODEL",)}
 
         argument = ("FLOAT", {"default": 1.0, "min": 0.0, "max": 1.0, "step": 0.01})
 
@@ -236,7 +234,6 @@ class ModelMergeCosmos14B(comfy_extras.nodes_model_merging.ModelMergeBlocks):
         arg_dict["t_embedder."] = argument
         arg_dict["affline_norm."] = argument
 
-
         for i in range(36):
             arg_dict["blocks.block{}.".format(i)] = argument
 
@@ -244,14 +241,14 @@ class ModelMergeCosmos14B(comfy_extras.nodes_model_merging.ModelMergeBlocks):
 
         return {"required": arg_dict}
 
+
 class ModelMergeWAN2_1(comfy_extras.nodes_model_merging.ModelMergeBlocks):
     CATEGORY = "advanced/model_merging/model_specific"
     DESCRIPTION = "1.3B model has 30 blocks, 14B model has 40 blocks. Image to video model has the extra img_emb."
 
     @classmethod
     def INPUT_TYPES(s):
-        arg_dict = { "model1": ("MODEL",),
-                              "model2": ("MODEL",)}
+        arg_dict = {"model1": ("MODEL",), "model2": ("MODEL",)}
 
         argument = ("FLOAT", {"default": 1.0, "min": 0.0, "max": 1.0, "step": 0.01})
 
@@ -268,9 +265,10 @@ class ModelMergeWAN2_1(comfy_extras.nodes_model_merging.ModelMergeBlocks):
 
         return {"required": arg_dict}
 
+
 NODE_CLASS_MAPPINGS = {
     "ModelMergeSD1": ModelMergeSD1,
-    "ModelMergeSD2": ModelMergeSD1, #SD1 and SD2 have the same blocks
+    "ModelMergeSD2": ModelMergeSD1,  # SD1 and SD2 have the same blocks
     "ModelMergeSDXL": ModelMergeSDXL,
     "ModelMergeSD3_2B": ModelMergeSD3_2B,
     "ModelMergeAuraflow": ModelMergeAuraflow,

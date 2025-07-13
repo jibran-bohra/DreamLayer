@@ -211,9 +211,7 @@ comfyui-workflow-templates is not installed.
         try:
             import comfyui_embedded_docs
 
-            return str(
-                importlib.resources.files(comfyui_embedded_docs) / "docs"
-            )
+            return str(importlib.resources.files(comfyui_embedded_docs) / "docs")
         except ImportError:
             logging.info("comfyui-embedded-docs package not found")
             return None

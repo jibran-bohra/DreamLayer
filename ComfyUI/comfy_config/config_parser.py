@@ -8,7 +8,7 @@ from comfy_config.types import (
     ComfyConfig,
     ProjectConfig,
     PyProjectConfig,
-    PyProjectSettings
+    PyProjectSettings,
 )
 
 """
@@ -51,11 +51,13 @@ Example:
     >>> project_config = config_parser.extract_node_configuration(py_file_path)
     >>> print(project_config.project.name)  # "my_node"
 """
+
+
 def extract_node_configuration(path) -> Optional[PyProjectConfig]:
     if os.path.isfile(path):
         file_path = Path(path)
 
-        if file_path.suffix.lower() != '.py':
+        if file_path.suffix.lower() != ".py":
             return None
 
         project_name = file_path.stem

@@ -45,11 +45,22 @@ from io import BytesIO
 LUMA_T2V_AVERAGE_DURATION = 105
 LUMA_I2V_AVERAGE_DURATION = 100
 
+
 def image_result_url_extractor(response: LumaGeneration):
-    return response.assets.image if hasattr(response, "assets") and hasattr(response.assets, "image") else None
+    return (
+        response.assets.image
+        if hasattr(response, "assets") and hasattr(response.assets, "image")
+        else None
+    )
+
 
 def video_result_url_extractor(response: LumaGeneration):
-    return response.assets.video if hasattr(response, "assets") and hasattr(response.assets, "video") else None
+    return (
+        response.assets.video
+        if hasattr(response, "assets") and hasattr(response.assets, "video")
+        else None
+    )
+
 
 class LumaReferenceNode(ComfyNodeABC):
     """
@@ -235,19 +246,25 @@ class LumaImageGenerationNode(ComfyNodeABC):
         api_image_ref = None
         if image_luma_ref is not None:
             api_image_ref = self._convert_luma_refs(
-                image_luma_ref, max_refs=4, auth_kwargs=kwargs,
+                image_luma_ref,
+                max_refs=4,
+                auth_kwargs=kwargs,
             )
         # handle style_luma_ref
         api_style_ref = None
         if style_image is not None:
             api_style_ref = self._convert_style_image(
-                style_image, weight=style_image_weight, auth_kwargs=kwargs,
+                style_image,
+                weight=style_image_weight,
+                auth_kwargs=kwargs,
             )
         # handle character_ref images
         character_ref = None
         if character_image is not None:
             download_urls = upload_images_to_comfyapi(
-                character_image, max_images=4, auth_kwargs=kwargs,
+                character_image,
+                max_images=4,
+                auth_kwargs=kwargs,
             )
             character_ref = LumaCharacterRef(
                 identity0=LumaImageIdentity(images=download_urls)
@@ -293,7 +310,10 @@ class LumaImageGenerationNode(ComfyNodeABC):
         return (img,)
 
     def _convert_luma_refs(
-        self, luma_ref: LumaReferenceChain, max_refs: int, auth_kwargs: Optional[dict[str,str]] = None
+        self,
+        luma_ref: LumaReferenceChain,
+        max_refs: int,
+        auth_kwargs: Optional[dict[str, str]] = None,
     ):
         luma_urls = []
         ref_count = 0
@@ -308,7 +328,10 @@ class LumaImageGenerationNode(ComfyNodeABC):
         return luma_ref.create_api_model(download_urls=luma_urls, max_refs=max_refs)
 
     def _convert_style_image(
-        self, style_image: torch.Tensor, weight: float, auth_kwargs: Optional[dict[str,str]] = None
+        self,
+        style_image: torch.Tensor,
+        weight: float,
+        auth_kwargs: Optional[dict[str, str]] = None,
     ):
         chain = LumaReferenceChain(
             first_ref=LumaReference(image=style_image, weight=weight)
@@ -382,7 +405,9 @@ class LumaImageModifyNode(ComfyNodeABC):
     ):
         # first, upload image
         download_urls = upload_images_to_comfyapi(
-            image, max_images=1, auth_kwargs=kwargs,
+            image,
+            max_images=1,
+            auth_kwargs=kwargs,
         )
         image_url = download_urls[0]
         # next, make Luma call with download url provided
@@ -397,7 +422,8 @@ class LumaImageModifyNode(ComfyNodeABC):
                 prompt=prompt,
                 model=model,
                 modify_image_ref=LumaModifyImageRef(
-                    url=image_url, weight=round(max(min(1.0-image_weight, 0.98), 0.0), 2)
+                    url=image_url,
+                    weight=round(max(min(1.0 - image_weight, 0.98), 0.0), 2),
                 ),
             ),
             auth_kwargs=kwargs,
@@ -532,7 +558,9 @@ class LumaTextToVideoGenerationNode(ComfyNodeABC):
         response_api: LumaGeneration = operation.execute()
 
         if unique_id:
-            PromptServer.instance.send_progress_text(f"Luma video generation started: {response_api.id}", unique_id)
+            PromptServer.instance.send_progress_text(
+                f"Luma video generation started: {response_api.id}", unique_id
+            )
 
         operation = PollingOperation(
             poll_endpoint=ApiEndpoint(
@@ -644,7 +672,9 @@ class LumaImageToVideoGenerationNode(ComfyNodeABC):
             raise Exception(
                 "At least one of first_image and last_image requires an input."
             )
-        keyframes = self._convert_to_keyframes(first_image, last_image, auth_kwargs=kwargs)
+        keyframes = self._convert_to_keyframes(
+            first_image, last_image, auth_kwargs=kwargs
+        )
         duration = duration if model != LumaVideoModel.ray_1_6 else None
         resolution = resolution if model != LumaVideoModel.ray_1_6 else None
 
@@ -670,7 +700,9 @@ class LumaImageToVideoGenerationNode(ComfyNodeABC):
         response_api: LumaGeneration = operation.execute()
 
         if unique_id:
-            PromptServer.instance.send_progress_text(f"Luma video generation started: {response_api.id}", unique_id)
+            PromptServer.instance.send_progress_text(
+                f"Luma video generation started: {response_api.id}", unique_id
+            )
 
         operation = PollingOperation(
             poll_endpoint=ApiEndpoint(
@@ -696,7 +728,7 @@ class LumaImageToVideoGenerationNode(ComfyNodeABC):
         self,
         first_image: torch.Tensor = None,
         last_image: torch.Tensor = None,
-        auth_kwargs: Optional[dict[str,str]] = None,
+        auth_kwargs: Optional[dict[str, str]] = None,
     ):
         if first_image is None and last_image is None:
             return None
@@ -704,12 +736,16 @@ class LumaImageToVideoGenerationNode(ComfyNodeABC):
         frame1 = None
         if first_image is not None:
             download_urls = upload_images_to_comfyapi(
-                first_image, max_images=1, auth_kwargs=auth_kwargs,
+                first_image,
+                max_images=1,
+                auth_kwargs=auth_kwargs,
             )
             frame0 = LumaImageReference(type="image", url=download_urls[0])
         if last_image is not None:
             download_urls = upload_images_to_comfyapi(
-                last_image, max_images=1, auth_kwargs=auth_kwargs,
+                last_image,
+                max_images=1,
+                auth_kwargs=auth_kwargs,
             )
             frame1 = LumaImageReference(type="image", url=download_urls[0])
         return LumaKeyframes(frame0=frame0, frame1=frame1)

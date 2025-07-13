@@ -41,6 +41,7 @@ def upload_image_to_tripo(image, **kwargs):
     urls = upload_images_to_comfyapi(image, max_images=1, auth_kwargs=kwargs)
     return TripoFileReference(TripoUrlReference(url=urls[0], type="jpeg"))
 
+
 def get_model_url_from_response(response: TripoTaskResponse) -> str:
     if response.data is not None:
         for key in ["pbr_model", "model", "base_model"]:
@@ -88,11 +89,14 @@ def poll_until_finished(
         return model_file, task_id
     raise RuntimeError(f"Failed to generate mesh: {response_poll}")
 
+
 class TripoTextToModelNode:
     """
     Generates 3D models synchronously based on a text prompt using Tripo's API.
     """
+
     AVERAGE_DURATION = 80
+
     @classmethod
     def INPUT_TYPES(s):
         return {
@@ -101,8 +105,19 @@ class TripoTextToModelNode:
             },
             "optional": {
                 "negative_prompt": ("STRING", {"multiline": True}),
-                "model_version": model_field_to_node_input(IO.COMBO, TripoTextToModelRequest, "model_version", enum_type=TripoModelVersion),
-                "style": model_field_to_node_input(IO.COMBO, TripoTextToModelRequest, "style", enum_type=TripoStyle, default="None"),
+                "model_version": model_field_to_node_input(
+                    IO.COMBO,
+                    TripoTextToModelRequest,
+                    "model_version",
+                    enum_type=TripoModelVersion,
+                ),
+                "style": model_field_to_node_input(
+                    IO.COMBO,
+                    TripoTextToModelRequest,
+                    "style",
+                    enum_type=TripoStyle,
+                    default="None",
+                ),
                 "texture": ("BOOLEAN", {"default": True}),
                 "pbr": ("BOOLEAN", {"default": True}),
                 "image_seed": ("INT", {"default": 42}),
@@ -110,7 +125,7 @@ class TripoTextToModelNode:
                 "texture_seed": ("INT", {"default": 42}),
                 "texture_quality": (["standard", "detailed"], {"default": "standard"}),
                 "face_limit": ("INT", {"min": -1, "max": 500000, "default": -1}),
-                "quad": ("BOOLEAN", {"default": False})
+                "quad": ("BOOLEAN", {"default": False}),
             },
             "hidden": {
                 "auth_token": "AUTH_TOKEN_COMFY_ORG",
@@ -119,14 +134,32 @@ class TripoTextToModelNode:
             },
         }
 
-    RETURN_TYPES = ("STRING", "MODEL_TASK_ID",)
+    RETURN_TYPES = (
+        "STRING",
+        "MODEL_TASK_ID",
+    )
     RETURN_NAMES = ("model_file", "model task_id")
     FUNCTION = "generate_mesh"
     CATEGORY = "api node/3d/Tripo"
     API_NODE = True
     OUTPUT_NODE = True
 
-    def generate_mesh(self, prompt, negative_prompt=None, model_version=None, style=None, texture=None, pbr=None, image_seed=None, model_seed=None, texture_seed=None, texture_quality=None, face_limit=None, quad=None, **kwargs):
+    def generate_mesh(
+        self,
+        prompt,
+        negative_prompt=None,
+        model_version=None,
+        style=None,
+        texture=None,
+        pbr=None,
+        image_seed=None,
+        model_seed=None,
+        texture_seed=None,
+        texture_quality=None,
+        face_limit=None,
+        quad=None,
+        **kwargs,
+    ):
         style_enum = None if style == "None" else style
         if not prompt:
             raise RuntimeError("Prompt is required")
@@ -151,17 +184,20 @@ class TripoTextToModelNode:
                 texture_quality=texture_quality,
                 face_limit=face_limit,
                 auto_size=True,
-                quad=quad
+                quad=quad,
             ),
             auth_kwargs=kwargs,
         ).execute()
         return poll_until_finished(kwargs, response)
 
+
 class TripoImageToModelNode:
     """
     Generates 3D models synchronously based on a single image using Tripo's API.
     """
+
     AVERAGE_DURATION = 80
+
     @classmethod
     def INPUT_TYPES(s):
         return {
@@ -169,17 +205,36 @@ class TripoImageToModelNode:
                 "image": ("IMAGE",),
             },
             "optional": {
-                "model_version": model_field_to_node_input(IO.COMBO, TripoImageToModelRequest, "model_version", enum_type=TripoModelVersion),
-                "style": model_field_to_node_input(IO.COMBO, TripoTextToModelRequest, "style", enum_type=TripoStyle, default="None"),
+                "model_version": model_field_to_node_input(
+                    IO.COMBO,
+                    TripoImageToModelRequest,
+                    "model_version",
+                    enum_type=TripoModelVersion,
+                ),
+                "style": model_field_to_node_input(
+                    IO.COMBO,
+                    TripoTextToModelRequest,
+                    "style",
+                    enum_type=TripoStyle,
+                    default="None",
+                ),
                 "texture": ("BOOLEAN", {"default": True}),
                 "pbr": ("BOOLEAN", {"default": True}),
                 "model_seed": ("INT", {"default": 42}),
-                "orientation": model_field_to_node_input(IO.COMBO, TripoImageToModelRequest, "orientation", enum_type=TripoOrientation),
+                "orientation": model_field_to_node_input(
+                    IO.COMBO,
+                    TripoImageToModelRequest,
+                    "orientation",
+                    enum_type=TripoOrientation,
+                ),
                 "texture_seed": ("INT", {"default": 42}),
                 "texture_quality": (["standard", "detailed"], {"default": "standard"}),
-                "texture_alignment": (["original_image", "geometry"], {"default": "original_image"}),
+                "texture_alignment": (
+                    ["original_image", "geometry"],
+                    {"default": "original_image"},
+                ),
                 "face_limit": ("INT", {"min": -1, "max": 500000, "default": -1}),
-                "quad": ("BOOLEAN", {"default": False})
+                "quad": ("BOOLEAN", {"default": False}),
             },
             "hidden": {
                 "auth_token": "AUTH_TOKEN_COMFY_ORG",
@@ -188,14 +243,32 @@ class TripoImageToModelNode:
             },
         }
 
-    RETURN_TYPES = ("STRING", "MODEL_TASK_ID",)
+    RETURN_TYPES = (
+        "STRING",
+        "MODEL_TASK_ID",
+    )
     RETURN_NAMES = ("model_file", "model task_id")
     FUNCTION = "generate_mesh"
     CATEGORY = "api node/3d/Tripo"
     API_NODE = True
     OUTPUT_NODE = True
 
-    def generate_mesh(self, image, model_version=None, style=None, texture=None, pbr=None, model_seed=None, orientation=None, texture_alignment=None, texture_seed=None, texture_quality=None, face_limit=None, quad=None, **kwargs):
+    def generate_mesh(
+        self,
+        image,
+        model_version=None,
+        style=None,
+        texture=None,
+        pbr=None,
+        model_seed=None,
+        orientation=None,
+        texture_alignment=None,
+        texture_seed=None,
+        texture_quality=None,
+        face_limit=None,
+        quad=None,
+        **kwargs,
+    ):
         style_enum = None if style == "None" else style
         if image is None:
             raise RuntimeError("Image is required")
@@ -221,17 +294,20 @@ class TripoImageToModelNode:
                 texture_quality=texture_quality,
                 face_limit=face_limit,
                 auto_size=True,
-                quad=quad
+                quad=quad,
             ),
             auth_kwargs=kwargs,
         ).execute()
         return poll_until_finished(kwargs, response)
 
+
 class TripoMultiviewToModelNode:
     """
     Generates 3D models synchronously based on up to four images (front, left, back, right) using Tripo's API.
     """
+
     AVERAGE_DURATION = 80
+
     @classmethod
     def INPUT_TYPES(s):
         return {
@@ -242,16 +318,29 @@ class TripoMultiviewToModelNode:
                 "image_left": ("IMAGE",),
                 "image_back": ("IMAGE",),
                 "image_right": ("IMAGE",),
-                "model_version": model_field_to_node_input(IO.COMBO, TripoMultiviewToModelRequest, "model_version", enum_type=TripoModelVersion),
-                "orientation": model_field_to_node_input(IO.COMBO, TripoImageToModelRequest, "orientation", enum_type=TripoOrientation),
+                "model_version": model_field_to_node_input(
+                    IO.COMBO,
+                    TripoMultiviewToModelRequest,
+                    "model_version",
+                    enum_type=TripoModelVersion,
+                ),
+                "orientation": model_field_to_node_input(
+                    IO.COMBO,
+                    TripoImageToModelRequest,
+                    "orientation",
+                    enum_type=TripoOrientation,
+                ),
                 "texture": ("BOOLEAN", {"default": True}),
                 "pbr": ("BOOLEAN", {"default": True}),
                 "model_seed": ("INT", {"default": 42}),
                 "texture_seed": ("INT", {"default": 42}),
                 "texture_quality": (["standard", "detailed"], {"default": "standard"}),
-                "texture_alignment": (["original_image", "geometry"], {"default": "original_image"}),
+                "texture_alignment": (
+                    ["original_image", "geometry"],
+                    {"default": "original_image"},
+                ),
                 "face_limit": ("INT", {"min": -1, "max": 500000, "default": -1}),
-                "quad": ("BOOLEAN", {"default": False})
+                "quad": ("BOOLEAN", {"default": False}),
             },
             "hidden": {
                 "auth_token": "AUTH_TOKEN_COMFY_ORG",
@@ -260,14 +349,34 @@ class TripoMultiviewToModelNode:
             },
         }
 
-    RETURN_TYPES = ("STRING", "MODEL_TASK_ID",)
+    RETURN_TYPES = (
+        "STRING",
+        "MODEL_TASK_ID",
+    )
     RETURN_NAMES = ("model_file", "model task_id")
     FUNCTION = "generate_mesh"
     CATEGORY = "api node/3d/Tripo"
     API_NODE = True
     OUTPUT_NODE = True
 
-    def generate_mesh(self, image, image_left=None, image_back=None, image_right=None, model_version=None, orientation=None, texture=None, pbr=None, model_seed=None, texture_seed=None, texture_quality=None, texture_alignment=None, face_limit=None, quad=None, **kwargs):
+    def generate_mesh(
+        self,
+        image,
+        image_left=None,
+        image_back=None,
+        image_right=None,
+        model_version=None,
+        orientation=None,
+        texture=None,
+        pbr=None,
+        model_seed=None,
+        texture_seed=None,
+        texture_quality=None,
+        texture_alignment=None,
+        face_limit=None,
+        quad=None,
+        **kwargs,
+    ):
         if image is None:
             raise RuntimeError("front image for multiview is required")
         images = []
@@ -275,10 +384,12 @@ class TripoMultiviewToModelNode:
             "image": image,
             "image_left": image_left,
             "image_back": image_back,
-            "image_right": image_right
+            "image_right": image_right,
         }
         if image_left is None and image_back is None and image_right is None:
-            raise RuntimeError("At least one of left, back, or right image must be provided for multiview")
+            raise RuntimeError(
+                "At least one of left, back, or right image must be provided for multiview"
+            )
         for image_name in ["image", "image_left", "image_back", "image_right"]:
             image_ = image_dict[image_name]
             if image_ is not None:
@@ -311,6 +422,7 @@ class TripoMultiviewToModelNode:
         ).execute()
         return poll_until_finished(kwargs, response)
 
+
 class TripoTextureNode:
     @classmethod
     def INPUT_TYPES(s):
@@ -323,7 +435,10 @@ class TripoTextureNode:
                 "pbr": ("BOOLEAN", {"default": True}),
                 "texture_seed": ("INT", {"default": 42}),
                 "texture_quality": (["standard", "detailed"], {"default": "standard"}),
-                "texture_alignment": (["original_image", "geometry"], {"default": "original_image"}),
+                "texture_alignment": (
+                    ["original_image", "geometry"],
+                    {"default": "original_image"},
+                ),
             },
             "hidden": {
                 "auth_token": "AUTH_TOKEN_COMFY_ORG",
@@ -332,7 +447,10 @@ class TripoTextureNode:
             },
         }
 
-    RETURN_TYPES = ("STRING", "MODEL_TASK_ID",)
+    RETURN_TYPES = (
+        "STRING",
+        "MODEL_TASK_ID",
+    )
     RETURN_NAMES = ("model_file", "model task_id")
     FUNCTION = "generate_mesh"
     CATEGORY = "api node/3d/Tripo"
@@ -340,7 +458,16 @@ class TripoTextureNode:
     OUTPUT_NODE = True
     AVERAGE_DURATION = 80
 
-    def generate_mesh(self, model_task_id, texture=None, pbr=None, texture_seed=None, texture_quality=None, texture_alignment=None, **kwargs):
+    def generate_mesh(
+        self,
+        model_task_id,
+        texture=None,
+        pbr=None,
+        texture_seed=None,
+        texture_quality=None,
+        texture_alignment=None,
+        **kwargs,
+    ):
         response = SynchronousOperation(
             endpoint=ApiEndpoint(
                 path="/proxy/tripo/v2/openapi/task",
@@ -354,7 +481,7 @@ class TripoTextureNode:
                 pbr=pbr,
                 texture_seed=texture_seed,
                 texture_quality=texture_quality,
-                texture_alignment=texture_alignment
+                texture_alignment=texture_alignment,
             ),
             auth_kwargs=kwargs,
         ).execute()
@@ -366,9 +493,10 @@ class TripoRefineNode:
     def INPUT_TYPES(s):
         return {
             "required": {
-                "model_task_id": ("MODEL_TASK_ID", {
-                    "tooltip": "Must be a v1.4 Tripo model"
-                }),
+                "model_task_id": (
+                    "MODEL_TASK_ID",
+                    {"tooltip": "Must be a v1.4 Tripo model"},
+                ),
             },
             "hidden": {
                 "auth_token": "AUTH_TOKEN_COMFY_ORG",
@@ -379,7 +507,10 @@ class TripoRefineNode:
 
     DESCRIPTION = "Refine a draft model created by v1.4 Tripo models only."
 
-    RETURN_TYPES = ("STRING", "MODEL_TASK_ID",)
+    RETURN_TYPES = (
+        "STRING",
+        "MODEL_TASK_ID",
+    )
     RETURN_NAMES = ("model_file", "model task_id")
     FUNCTION = "generate_mesh"
     CATEGORY = "api node/3d/Tripo"
@@ -395,9 +526,7 @@ class TripoRefineNode:
                 request_model=TripoRefineModelRequest,
                 response_model=TripoTaskResponse,
             ),
-            request=TripoRefineModelRequest(
-                draft_model_task_id=model_task_id
-            ),
+            request=TripoRefineModelRequest(draft_model_task_id=model_task_id),
             auth_kwargs=kwargs,
         ).execute()
         return poll_until_finished(kwargs, response)
@@ -436,11 +565,12 @@ class TripoRigNode:
             request=TripoAnimateRigRequest(
                 original_model_task_id=original_model_task_id,
                 out_format="glb",
-                spec="tripo"
+                spec="tripo",
             ),
             auth_kwargs=kwargs,
         ).execute()
         return poll_until_finished(kwargs, response)
+
 
 class TripoRetargetNode:
     @classmethod
@@ -448,17 +578,19 @@ class TripoRetargetNode:
         return {
             "required": {
                 "original_model_task_id": ("RIG_TASK_ID",),
-                "animation": ([
-                    "preset:idle",
-                    "preset:walk",
-                    "preset:climb",
-                    "preset:jump",
-                    "preset:slash",
-                    "preset:shoot",
-                    "preset:hurt",
-                    "preset:fall",
-                    "preset:turn",
-                ],),
+                "animation": (
+                    [
+                        "preset:idle",
+                        "preset:walk",
+                        "preset:climb",
+                        "preset:jump",
+                        "preset:slash",
+                        "preset:shoot",
+                        "preset:hurt",
+                        "preset:fall",
+                        "preset:turn",
+                    ],
+                ),
             },
             "hidden": {
                 "auth_token": "AUTH_TOKEN_COMFY_ORG",
@@ -487,25 +619,41 @@ class TripoRetargetNode:
                 original_model_task_id=original_model_task_id,
                 animation=animation,
                 out_format="glb",
-                bake_animation=True
+                bake_animation=True,
             ),
             auth_kwargs=kwargs,
         ).execute()
         return poll_until_finished(kwargs, response)
+
 
 class TripoConversionNode:
     @classmethod
     def INPUT_TYPES(s):
         return {
             "required": {
-                "original_model_task_id": ("MODEL_TASK_ID,RIG_TASK_ID,RETARGET_TASK_ID",),
+                "original_model_task_id": (
+                    "MODEL_TASK_ID,RIG_TASK_ID,RETARGET_TASK_ID",
+                ),
                 "format": (["GLTF", "USDZ", "FBX", "OBJ", "STL", "3MF"],),
             },
             "optional": {
                 "quad": ("BOOLEAN", {"default": False}),
                 "face_limit": ("INT", {"min": -1, "max": 500000, "default": -1}),
                 "texture_size": ("INT", {"min": 128, "max": 4096, "default": 4096}),
-                "texture_format": (["BMP", "DPX", "HDR", "JPEG", "OPEN_EXR", "PNG", "TARGA", "TIFF", "WEBP"], {"default": "JPEG"})
+                "texture_format": (
+                    [
+                        "BMP",
+                        "DPX",
+                        "HDR",
+                        "JPEG",
+                        "OPEN_EXR",
+                        "PNG",
+                        "TARGA",
+                        "TIFF",
+                        "WEBP",
+                    ],
+                    {"default": "JPEG"},
+                ),
             },
             "hidden": {
                 "auth_token": "AUTH_TOKEN_COMFY_ORG",
@@ -518,7 +666,11 @@ class TripoConversionNode:
     def VALIDATE_INPUTS(cls, input_types):
         # The min and max of input1 and input2 are still validated because
         # we didn't take `input1` or `input2` as arguments
-        if input_types["original_model_task_id"] not in ("MODEL_TASK_ID", "RIG_TASK_ID", "RETARGET_TASK_ID"):
+        if input_types["original_model_task_id"] not in (
+            "MODEL_TASK_ID",
+            "RIG_TASK_ID",
+            "RETARGET_TASK_ID",
+        ):
             return "original_model_task_id must be MODEL_TASK_ID, RIG_TASK_ID or RETARGET_TASK_ID type"
         return True
 
@@ -529,7 +681,16 @@ class TripoConversionNode:
     OUTPUT_NODE = True
     AVERAGE_DURATION = 30
 
-    def generate_mesh(self, original_model_task_id, format, quad, face_limit, texture_size, texture_format, **kwargs):
+    def generate_mesh(
+        self,
+        original_model_task_id,
+        format,
+        quad,
+        face_limit,
+        texture_size,
+        texture_format,
+        **kwargs,
+    ):
         if not original_model_task_id:
             raise RuntimeError("original_model_task_id is required")
         response = SynchronousOperation(
@@ -545,11 +706,12 @@ class TripoConversionNode:
                 quad=quad if quad else None,
                 face_limit=face_limit if face_limit != -1 else None,
                 texture_size=texture_size if texture_size != 4096 else None,
-                texture_format=texture_format if texture_format != "JPEG" else None
+                texture_format=texture_format if texture_format != "JPEG" else None,
             ),
             auth_kwargs=kwargs,
         ).execute()
         return poll_until_finished(kwargs, response)
+
 
 NODE_CLASS_MAPPINGS = {
     "TripoTextToModelNode": TripoTextToModelNode,

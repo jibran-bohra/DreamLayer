@@ -26,120 +26,120 @@ from comfy_api_nodes.apinode_utils import (
 from server import PromptServer
 
 V1_V1_RES_MAP = {
-  "Auto":"AUTO",
-  "512 x 1536":"RESOLUTION_512_1536",
-  "576 x 1408":"RESOLUTION_576_1408",
-  "576 x 1472":"RESOLUTION_576_1472",
-  "576 x 1536":"RESOLUTION_576_1536",
-  "640 x 1024":"RESOLUTION_640_1024",
-  "640 x 1344":"RESOLUTION_640_1344",
-  "640 x 1408":"RESOLUTION_640_1408",
-  "640 x 1472":"RESOLUTION_640_1472",
-  "640 x 1536":"RESOLUTION_640_1536",
-  "704 x 1152":"RESOLUTION_704_1152",
-  "704 x 1216":"RESOLUTION_704_1216",
-  "704 x 1280":"RESOLUTION_704_1280",
-  "704 x 1344":"RESOLUTION_704_1344",
-  "704 x 1408":"RESOLUTION_704_1408",
-  "704 x 1472":"RESOLUTION_704_1472",
-  "720 x 1280":"RESOLUTION_720_1280",
-  "736 x 1312":"RESOLUTION_736_1312",
-  "768 x 1024":"RESOLUTION_768_1024",
-  "768 x 1088":"RESOLUTION_768_1088",
-  "768 x 1152":"RESOLUTION_768_1152",
-  "768 x 1216":"RESOLUTION_768_1216",
-  "768 x 1232":"RESOLUTION_768_1232",
-  "768 x 1280":"RESOLUTION_768_1280",
-  "768 x 1344":"RESOLUTION_768_1344",
-  "832 x 960":"RESOLUTION_832_960",
-  "832 x 1024":"RESOLUTION_832_1024",
-  "832 x 1088":"RESOLUTION_832_1088",
-  "832 x 1152":"RESOLUTION_832_1152",
-  "832 x 1216":"RESOLUTION_832_1216",
-  "832 x 1248":"RESOLUTION_832_1248",
-  "864 x 1152":"RESOLUTION_864_1152",
-  "896 x 960":"RESOLUTION_896_960",
-  "896 x 1024":"RESOLUTION_896_1024",
-  "896 x 1088":"RESOLUTION_896_1088",
-  "896 x 1120":"RESOLUTION_896_1120",
-  "896 x 1152":"RESOLUTION_896_1152",
-  "960 x 832":"RESOLUTION_960_832",
-  "960 x 896":"RESOLUTION_960_896",
-  "960 x 1024":"RESOLUTION_960_1024",
-  "960 x 1088":"RESOLUTION_960_1088",
-  "1024 x 640":"RESOLUTION_1024_640",
-  "1024 x 768":"RESOLUTION_1024_768",
-  "1024 x 832":"RESOLUTION_1024_832",
-  "1024 x 896":"RESOLUTION_1024_896",
-  "1024 x 960":"RESOLUTION_1024_960",
-  "1024 x 1024":"RESOLUTION_1024_1024",
-  "1088 x 768":"RESOLUTION_1088_768",
-  "1088 x 832":"RESOLUTION_1088_832",
-  "1088 x 896":"RESOLUTION_1088_896",
-  "1088 x 960":"RESOLUTION_1088_960",
-  "1120 x 896":"RESOLUTION_1120_896",
-  "1152 x 704":"RESOLUTION_1152_704",
-  "1152 x 768":"RESOLUTION_1152_768",
-  "1152 x 832":"RESOLUTION_1152_832",
-  "1152 x 864":"RESOLUTION_1152_864",
-  "1152 x 896":"RESOLUTION_1152_896",
-  "1216 x 704":"RESOLUTION_1216_704",
-  "1216 x 768":"RESOLUTION_1216_768",
-  "1216 x 832":"RESOLUTION_1216_832",
-  "1232 x 768":"RESOLUTION_1232_768",
-  "1248 x 832":"RESOLUTION_1248_832",
-  "1280 x 704":"RESOLUTION_1280_704",
-  "1280 x 720":"RESOLUTION_1280_720",
-  "1280 x 768":"RESOLUTION_1280_768",
-  "1280 x 800":"RESOLUTION_1280_800",
-  "1312 x 736":"RESOLUTION_1312_736",
-  "1344 x 640":"RESOLUTION_1344_640",
-  "1344 x 704":"RESOLUTION_1344_704",
-  "1344 x 768":"RESOLUTION_1344_768",
-  "1408 x 576":"RESOLUTION_1408_576",
-  "1408 x 640":"RESOLUTION_1408_640",
-  "1408 x 704":"RESOLUTION_1408_704",
-  "1472 x 576":"RESOLUTION_1472_576",
-  "1472 x 640":"RESOLUTION_1472_640",
-  "1472 x 704":"RESOLUTION_1472_704",
-  "1536 x 512":"RESOLUTION_1536_512",
-  "1536 x 576":"RESOLUTION_1536_576",
-  "1536 x 640":"RESOLUTION_1536_640",
+    "Auto": "AUTO",
+    "512 x 1536": "RESOLUTION_512_1536",
+    "576 x 1408": "RESOLUTION_576_1408",
+    "576 x 1472": "RESOLUTION_576_1472",
+    "576 x 1536": "RESOLUTION_576_1536",
+    "640 x 1024": "RESOLUTION_640_1024",
+    "640 x 1344": "RESOLUTION_640_1344",
+    "640 x 1408": "RESOLUTION_640_1408",
+    "640 x 1472": "RESOLUTION_640_1472",
+    "640 x 1536": "RESOLUTION_640_1536",
+    "704 x 1152": "RESOLUTION_704_1152",
+    "704 x 1216": "RESOLUTION_704_1216",
+    "704 x 1280": "RESOLUTION_704_1280",
+    "704 x 1344": "RESOLUTION_704_1344",
+    "704 x 1408": "RESOLUTION_704_1408",
+    "704 x 1472": "RESOLUTION_704_1472",
+    "720 x 1280": "RESOLUTION_720_1280",
+    "736 x 1312": "RESOLUTION_736_1312",
+    "768 x 1024": "RESOLUTION_768_1024",
+    "768 x 1088": "RESOLUTION_768_1088",
+    "768 x 1152": "RESOLUTION_768_1152",
+    "768 x 1216": "RESOLUTION_768_1216",
+    "768 x 1232": "RESOLUTION_768_1232",
+    "768 x 1280": "RESOLUTION_768_1280",
+    "768 x 1344": "RESOLUTION_768_1344",
+    "832 x 960": "RESOLUTION_832_960",
+    "832 x 1024": "RESOLUTION_832_1024",
+    "832 x 1088": "RESOLUTION_832_1088",
+    "832 x 1152": "RESOLUTION_832_1152",
+    "832 x 1216": "RESOLUTION_832_1216",
+    "832 x 1248": "RESOLUTION_832_1248",
+    "864 x 1152": "RESOLUTION_864_1152",
+    "896 x 960": "RESOLUTION_896_960",
+    "896 x 1024": "RESOLUTION_896_1024",
+    "896 x 1088": "RESOLUTION_896_1088",
+    "896 x 1120": "RESOLUTION_896_1120",
+    "896 x 1152": "RESOLUTION_896_1152",
+    "960 x 832": "RESOLUTION_960_832",
+    "960 x 896": "RESOLUTION_960_896",
+    "960 x 1024": "RESOLUTION_960_1024",
+    "960 x 1088": "RESOLUTION_960_1088",
+    "1024 x 640": "RESOLUTION_1024_640",
+    "1024 x 768": "RESOLUTION_1024_768",
+    "1024 x 832": "RESOLUTION_1024_832",
+    "1024 x 896": "RESOLUTION_1024_896",
+    "1024 x 960": "RESOLUTION_1024_960",
+    "1024 x 1024": "RESOLUTION_1024_1024",
+    "1088 x 768": "RESOLUTION_1088_768",
+    "1088 x 832": "RESOLUTION_1088_832",
+    "1088 x 896": "RESOLUTION_1088_896",
+    "1088 x 960": "RESOLUTION_1088_960",
+    "1120 x 896": "RESOLUTION_1120_896",
+    "1152 x 704": "RESOLUTION_1152_704",
+    "1152 x 768": "RESOLUTION_1152_768",
+    "1152 x 832": "RESOLUTION_1152_832",
+    "1152 x 864": "RESOLUTION_1152_864",
+    "1152 x 896": "RESOLUTION_1152_896",
+    "1216 x 704": "RESOLUTION_1216_704",
+    "1216 x 768": "RESOLUTION_1216_768",
+    "1216 x 832": "RESOLUTION_1216_832",
+    "1232 x 768": "RESOLUTION_1232_768",
+    "1248 x 832": "RESOLUTION_1248_832",
+    "1280 x 704": "RESOLUTION_1280_704",
+    "1280 x 720": "RESOLUTION_1280_720",
+    "1280 x 768": "RESOLUTION_1280_768",
+    "1280 x 800": "RESOLUTION_1280_800",
+    "1312 x 736": "RESOLUTION_1312_736",
+    "1344 x 640": "RESOLUTION_1344_640",
+    "1344 x 704": "RESOLUTION_1344_704",
+    "1344 x 768": "RESOLUTION_1344_768",
+    "1408 x 576": "RESOLUTION_1408_576",
+    "1408 x 640": "RESOLUTION_1408_640",
+    "1408 x 704": "RESOLUTION_1408_704",
+    "1472 x 576": "RESOLUTION_1472_576",
+    "1472 x 640": "RESOLUTION_1472_640",
+    "1472 x 704": "RESOLUTION_1472_704",
+    "1536 x 512": "RESOLUTION_1536_512",
+    "1536 x 576": "RESOLUTION_1536_576",
+    "1536 x 640": "RESOLUTION_1536_640",
 }
 
 V1_V2_RATIO_MAP = {
-  "1:1":"ASPECT_1_1",
-  "4:3":"ASPECT_4_3",
-  "3:4":"ASPECT_3_4",
-  "16:9":"ASPECT_16_9",
-  "9:16":"ASPECT_9_16",
-  "2:1":"ASPECT_2_1",
-  "1:2":"ASPECT_1_2",
-  "3:2":"ASPECT_3_2",
-  "2:3":"ASPECT_2_3",
-  "4:5":"ASPECT_4_5",
-  "5:4":"ASPECT_5_4",
+    "1:1": "ASPECT_1_1",
+    "4:3": "ASPECT_4_3",
+    "3:4": "ASPECT_3_4",
+    "16:9": "ASPECT_16_9",
+    "9:16": "ASPECT_9_16",
+    "2:1": "ASPECT_2_1",
+    "1:2": "ASPECT_1_2",
+    "3:2": "ASPECT_3_2",
+    "2:3": "ASPECT_2_3",
+    "4:5": "ASPECT_4_5",
+    "5:4": "ASPECT_5_4",
 }
 
 V3_RATIO_MAP = {
-    "1:3":"1x3",
-    "3:1":"3x1",
-    "1:2":"1x2",
-    "2:1":"2x1",
-    "9:16":"9x16",
-    "16:9":"16x9",
-    "10:16":"10x16",
-    "16:10":"16x10",
-    "2:3":"2x3",
-    "3:2":"3x2",
-    "3:4":"3x4",
-    "4:3":"4x3",
-    "4:5":"4x5",
-    "5:4":"5x4",
-    "1:1":"1x1",
+    "1:3": "1x3",
+    "3:1": "3x1",
+    "1:2": "1x2",
+    "2:1": "2x1",
+    "9:16": "9x16",
+    "16:9": "16x9",
+    "10:16": "10x16",
+    "16:10": "16x10",
+    "2:3": "2x3",
+    "3:2": "3x2",
+    "3:4": "3x4",
+    "4:3": "4x3",
+    "4:5": "4x5",
+    "5:4": "5x4",
+    "1:1": "1x1",
 }
 
-V3_RESOLUTIONS= [
+V3_RESOLUTIONS = [
     "Auto",
     "512x1536",
     "576x1408",
@@ -209,8 +209,9 @@ V3_RESOLUTIONS= [
     "1472x704",
     "1536x512",
     "1536x576",
-    "1536x640"
+    "1536x640",
 ]
+
 
 def download_and_process_images(image_urls):
     """Helper function to download and process multiple images from URLs"""
@@ -220,8 +221,12 @@ def download_and_process_images(image_urls):
 
     for image_url in image_urls:
         # Using functions from apinode_utils.py to handle downloading and processing
-        image_bytesio = download_url_to_bytesio(image_url)  # Download image content to BytesIO
-        img_tensor = bytesio_to_image_tensor(image_bytesio, mode="RGB")  # Convert to torch.Tensor with RGB mode
+        image_bytesio = download_url_to_bytesio(
+            image_url
+        )  # Download image content to BytesIO
+        img_tensor = bytesio_to_image_tensor(
+            image_bytesio, mode="RGB"
+        )  # Convert to torch.Tensor with RGB mode
         image_tensors.append(img_tensor)
 
     # Stack tensors to match (N, width, height, channels)
@@ -241,7 +246,7 @@ def display_image_urls_on_node(image_urls, node_id):
             )
         else:
             urls_text = "Generated Image URLs:\n" + "\n".join(
-                f"{i+1}. {url}" for i, url in enumerate(image_urls)
+                f"{i + 1}. {url}" for i, url in enumerate(image_urls)
             )
             PromptServer.instance.send_progress_text(urls_text, node_id)
 
@@ -271,7 +276,7 @@ class IdeogramV1(ComfyNodeABC):
                     {
                         "default": False,
                         "tooltip": "Whether to use turbo mode (faster generation, potentially lower quality)",
-                    }
+                    },
                 ),
             },
             "optional": {
@@ -365,7 +370,7 @@ class IdeogramV1(ComfyNodeABC):
                 )
             ),
             api_base="https://api.ideogram.ai",
-            auth_token=kwargs.get('auth_token'),
+            auth_token=kwargs.get("auth_token"),
             auth_kwargs={},
         )
 
@@ -408,7 +413,7 @@ class IdeogramV2(ComfyNodeABC):
                     {
                         "default": False,
                         "tooltip": "Whether to use turbo mode (faster generation, potentially lower quality)",
-                    }
+                    },
                 ),
             },
             "optional": {
@@ -450,7 +455,14 @@ class IdeogramV2(ComfyNodeABC):
                 "style_type": (
                     IO.COMBO,
                     {
-                        "options": ["AUTO", "GENERAL", "REALISTIC", "DESIGN", "RENDER_3D", "ANIME"],
+                        "options": [
+                            "AUTO",
+                            "GENERAL",
+                            "REALISTIC",
+                            "DESIGN",
+                            "RENDER_3D",
+                            "ANIME",
+                        ],
                         "default": "NONE",
                         "tooltip": "Style type for generation (V2 only)",
                     },
@@ -467,14 +479,14 @@ class IdeogramV2(ComfyNodeABC):
                     IO.INT,
                     {"default": 1, "min": 1, "max": 8, "step": 1, "display": "number"},
                 ),
-                #"color_palette": (
+                # "color_palette": (
                 #    IO.STRING,
                 #    {
                 #        "multiline": False,
                 #        "default": "",
                 #        "tooltip": "Color palette preset name or hex colors with weights",
                 #    },
-                #),
+                # ),
             },
             "hidden": {
                 "auth_token": "AUTH_TOKEN_COMFY_ORG",
@@ -543,7 +555,7 @@ class IdeogramV2(ComfyNodeABC):
                 )
             ),
             api_base="https://api.ideogram.ai",
-            auth_token=kwargs.get('auth_token'),
+            auth_token=kwargs.get("auth_token"),
             auth_kwargs={},
         )
 
@@ -559,6 +571,7 @@ class IdeogramV2(ComfyNodeABC):
 
         display_image_urls_on_node(image_urls, unique_id)
         return (download_and_process_images(image_urls),)
+
 
 class IdeogramV3(ComfyNodeABC):
     """
@@ -673,7 +686,7 @@ class IdeogramV3(ComfyNodeABC):
     ):
         print(f"[DEBUG] Ideogram kwargs: {kwargs}")
         # Extract auth token from api_key_comfy_org instead of auth_token
-        auth_token = kwargs.get('comfy_api_key')
+        auth_token = kwargs.get("comfy_api_key")
         print(f"[DEBUG] Auth token from comfy_api_key: {auth_token}")
 
         # For generation mode

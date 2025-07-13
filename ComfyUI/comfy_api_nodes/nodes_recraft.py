@@ -2,7 +2,7 @@ from __future__ import annotations
 from inspect import cleandoc
 from typing import Optional
 from comfy.utils import ProgressBar
-from comfy_extras.nodes_images import SVG # Added
+from comfy_extras.nodes_images import SVG  # Added
 from comfy.comfy_types.node_typing import IO
 from comfy_api_nodes.apis.recraft_api import (
     RecraftImageGenerationRequest,
@@ -38,51 +38,55 @@ from PIL import UnidentifiedImageError
 
 
 def handle_recraft_file_request(
-        image: torch.Tensor,
-        path: str,
-        mask: torch.Tensor=None,
-        total_pixels=4096*4096,
-        timeout=1024,
-        request=None,
-        auth_kwargs: dict[str,str] = None,
-    ) -> list[BytesIO]:
-        """
-        Handle sending common Recraft file-only request to get back file bytes.
-        """
-        if request is None:
-            request = EmptyRequest()
+    image: torch.Tensor,
+    path: str,
+    mask: torch.Tensor = None,
+    total_pixels=4096 * 4096,
+    timeout=1024,
+    request=None,
+    auth_kwargs: dict[str, str] = None,
+) -> list[BytesIO]:
+    """
+    Handle sending common Recraft file-only request to get back file bytes.
+    """
+    if request is None:
+        request = EmptyRequest()
 
-        files = {
-            'image': tensor_to_bytesio(image, total_pixels=total_pixels).read()
-        }
-        if mask is not None:
-            files['mask'] = tensor_to_bytesio(mask, total_pixels=total_pixels).read()
+    files = {"image": tensor_to_bytesio(image, total_pixels=total_pixels).read()}
+    if mask is not None:
+        files["mask"] = tensor_to_bytesio(mask, total_pixels=total_pixels).read()
 
-        operation = SynchronousOperation(
-            endpoint=ApiEndpoint(
-                path=path,
-                method=HttpMethod.POST,
-                request_model=type(request),
-                response_model=RecraftImageGenerationResponse,
-            ),
-            request=request,
-            files=files,
-            content_type="multipart/form-data",
-            auth_kwargs=auth_kwargs,
-            multipart_parser=recraft_multipart_parser,
-        )
-        response: RecraftImageGenerationResponse = operation.execute()
-        all_bytesio = []
-        if response.image is not None:
-            all_bytesio.append(download_url_to_bytesio(response.image.url, timeout=timeout))
-        else:
-            for data in response.data:
-                all_bytesio.append(download_url_to_bytesio(data.url, timeout=timeout))
+    operation = SynchronousOperation(
+        endpoint=ApiEndpoint(
+            path=path,
+            method=HttpMethod.POST,
+            request_model=type(request),
+            response_model=RecraftImageGenerationResponse,
+        ),
+        request=request,
+        files=files,
+        content_type="multipart/form-data",
+        auth_kwargs=auth_kwargs,
+        multipart_parser=recraft_multipart_parser,
+    )
+    response: RecraftImageGenerationResponse = operation.execute()
+    all_bytesio = []
+    if response.image is not None:
+        all_bytesio.append(download_url_to_bytesio(response.image.url, timeout=timeout))
+    else:
+        for data in response.data:
+            all_bytesio.append(download_url_to_bytesio(data.url, timeout=timeout))
 
-        return all_bytesio
+    return all_bytesio
 
 
-def recraft_multipart_parser(data, parent_key=None, formatter: callable=None, converted_to_check: list[list]=None, is_list=False) -> dict:
+def recraft_multipart_parser(
+    data,
+    parent_key=None,
+    formatter: callable = None,
+    converted_to_check: list[list] = None,
+    is_list=False,
+) -> dict:
     """
     Formats data such that multipart/form-data will work with requests library
     when both files and data are present.
@@ -115,7 +119,6 @@ def recraft_multipart_parser(data, parent_key=None, formatter: callable=None, co
     if converted_to_check is None:
         converted_to_check = []
 
-
     if formatter is None:
         formatter = lambda v: v  # Multipart representation of value
 
@@ -137,11 +140,19 @@ def recraft_multipart_parser(data, parent_key=None, formatter: callable=None, co
     for key, value in data.items():
         current_key = key if parent_key is None else f"{parent_key}[{key}]"
         if type(value) is dict:
-            converted.extend(recraft_multipart_parser(value, current_key, formatter, next_check).items())
+            converted.extend(
+                recraft_multipart_parser(
+                    value, current_key, formatter, next_check
+                ).items()
+            )
         elif type(value) is list:
             for ind, list_value in enumerate(value):
                 iter_key = f"{current_key}[]"
-                converted.extend(recraft_multipart_parser(list_value, iter_key, formatter, next_check, is_list=True).items())
+                converted.extend(
+                    recraft_multipart_parser(
+                        list_value, iter_key, formatter, next_check, is_list=True
+                    ).items()
+                )
         else:
             converted.append((current_key, formatter(value)))
 
@@ -152,6 +163,7 @@ class handle_recraft_image_output:
     """
     Catch an exception related to receiving SVG data instead of image, when Infinite Style Library style_id is in use.
     """
+
     def __init__(self):
         pass
 
@@ -160,7 +172,9 @@ class handle_recraft_image_output:
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         if exc_type is not None and exc_type is UnidentifiedImageError:
-            raise Exception("Received output data was not an image; likely an SVG. If you used style_id, make sure it is not a Vector art style.")
+            raise Exception(
+                "Received output data was not an image; likely an SVG. If you used style_id, make sure it is not a Vector art style."
+            )
 
 
 class RecraftColorRGBNode:
@@ -178,34 +192,45 @@ class RecraftColorRGBNode:
     def INPUT_TYPES(s):
         return {
             "required": {
-                "r": (IO.INT, {
-                    "default": 0,
-                    "min": 0,
-                    "max": 255,
-                    "tooltip": "Red value of color."
-                }),
-                "g": (IO.INT, {
-                    "default": 0,
-                    "min": 0,
-                    "max": 255,
-                    "tooltip": "Green value of color."
-                }),
-                "b": (IO.INT, {
-                    "default": 0,
-                    "min": 0,
-                    "max": 255,
-                    "tooltip": "Blue value of color."
-                }),
+                "r": (
+                    IO.INT,
+                    {
+                        "default": 0,
+                        "min": 0,
+                        "max": 255,
+                        "tooltip": "Red value of color.",
+                    },
+                ),
+                "g": (
+                    IO.INT,
+                    {
+                        "default": 0,
+                        "min": 0,
+                        "max": 255,
+                        "tooltip": "Green value of color.",
+                    },
+                ),
+                "b": (
+                    IO.INT,
+                    {
+                        "default": 0,
+                        "min": 0,
+                        "max": 255,
+                        "tooltip": "Blue value of color.",
+                    },
+                ),
             },
             "optional": {
                 "recraft_color": (RecraftIO.COLOR,),
-            }
+            },
         }
 
-    def create_color(self, r: int, g: int, b: int, recraft_color: RecraftColorChain=None):
+    def create_color(
+        self, r: int, g: int, b: int, recraft_color: RecraftColorChain = None
+    ):
         recraft_color = recraft_color.clone() if recraft_color else RecraftColorChain()
         recraft_color.add(RecraftColor(r, g, b))
-        return (recraft_color, )
+        return (recraft_color,)
 
 
 class RecraftControlsNode:
@@ -222,16 +247,19 @@ class RecraftControlsNode:
     @classmethod
     def INPUT_TYPES(s):
         return {
-            "required": {
-            },
+            "required": {},
             "optional": {
                 "colors": (RecraftIO.COLOR,),
                 "background_color": (RecraftIO.COLOR,),
-            }
+            },
         }
 
-    def create_controls(self, colors: RecraftColorChain=None, background_color: RecraftColorChain=None):
-        return (RecraftControls(colors=colors, background_color=background_color), )
+    def create_controls(
+        self,
+        colors: RecraftColorChain = None,
+        background_color: RecraftColorChain = None,
+    ):
+        return (RecraftControls(colors=colors, background_color=background_color),)
 
 
 class RecraftStyleV3RealisticImageNode:
@@ -308,10 +336,13 @@ class RecraftStyleInfiniteStyleLibrary:
     def INPUT_TYPES(s):
         return {
             "required": {
-                "style_id": (IO.STRING, {
-                    "default": "",
-                    "tooltip": "UUID of style from Infinite Style Library.",
-                })
+                "style_id": (
+                    IO.STRING,
+                    {
+                        "default": "",
+                        "tooltip": "UUID of style from Infinite Style Library.",
+                    },
+                )
             }
         }
 
@@ -446,7 +477,7 @@ class RecraftTextToImageNode:
             with handle_recraft_image_output():
                 if unique_id and data.url:
                     urls.append(data.url)
-                    urls_string = '\n'.join(urls)
+                    urls_string = "\n".join(urls)
                     PromptServer.instance.send_progress_text(
                         f"Result URL: {urls_string}", unique_id
                     )
@@ -476,7 +507,7 @@ class RecraftImageToImageNode:
     def INPUT_TYPES(s):
         return {
             "required": {
-                "image": (IO.IMAGE, ),
+                "image": (IO.IMAGE,),
                 "prompt": (
                     IO.STRING,
                     {
@@ -501,8 +532,8 @@ class RecraftImageToImageNode:
                         "min": 0.0,
                         "max": 1.0,
                         "step": 0.01,
-                        "tooltip": "Defines the difference with the original image, should lie in [0, 1], where 0 means almost identical, and 1 means miserable similarity."
-                    }
+                        "tooltip": "Defines the difference with the original image, should lie in [0, 1], where 0 means almost identical, and 1 means miserable similarity.",
+                    },
                 ),
                 "seed": (
                     IO.INT,
@@ -585,11 +616,13 @@ class RecraftImageToImageNode:
                 auth_kwargs=kwargs,
             )
             with handle_recraft_image_output():
-                images.append(torch.cat([bytesio_to_image_tensor(x) for x in sub_bytes], dim=0))
+                images.append(
+                    torch.cat([bytesio_to_image_tensor(x) for x in sub_bytes], dim=0)
+                )
             pbar.update(1)
 
         images_tensor = torch.cat(images, dim=0)
-        return (images_tensor, )
+        return (images_tensor,)
 
 
 class RecraftImageInpaintingNode:
@@ -607,8 +640,8 @@ class RecraftImageInpaintingNode:
     def INPUT_TYPES(s):
         return {
             "required": {
-                "image": (IO.IMAGE, ),
-                "mask": (IO.MASK, ),
+                "image": (IO.IMAGE,),
+                "mask": (IO.MASK,),
                 "prompt": (
                     IO.STRING,
                     {
@@ -684,7 +717,9 @@ class RecraftImageInpaintingNode:
         )
 
         # prepare mask tensor
-        mask = resize_mask_to_image(mask, image, allow_gradient=False, add_channel_dim=True)
+        mask = resize_mask_to_image(
+            mask, image, allow_gradient=False, add_channel_dim=True
+        )
 
         images = []
         total = image.shape[0]
@@ -692,17 +727,19 @@ class RecraftImageInpaintingNode:
         for i in range(total):
             sub_bytes = handle_recraft_file_request(
                 image=image[i],
-                mask=mask[i:i+1],
+                mask=mask[i : i + 1],
                 path="/proxy/recraft/images/inpaint",
                 request=request,
                 auth_kwargs=kwargs,
             )
             with handle_recraft_image_output():
-                images.append(torch.cat([bytesio_to_image_tensor(x) for x in sub_bytes], dim=0))
+                images.append(
+                    torch.cat([bytesio_to_image_tensor(x) for x in sub_bytes], dim=0)
+                )
             pbar.update(1)
 
         images_tensor = torch.cat(images, dim=0)
-        return (images_tensor, )
+        return (images_tensor,)
 
 
 class RecraftTextToVectorNode:
@@ -710,8 +747,10 @@ class RecraftTextToVectorNode:
     Generates SVG synchronously based on prompt and resolution.
     """
 
-    RETURN_TYPES = ("SVG",) # Changed
-    DESCRIPTION = cleandoc(__doc__ or "") if 'cleandoc' in globals() else __doc__ # Keep cleandoc if other nodes use it
+    RETURN_TYPES = ("SVG",)  # Changed
+    DESCRIPTION = (
+        cleandoc(__doc__ or "") if "cleandoc" in globals() else __doc__
+    )  # Keep cleandoc if other nodes use it
     FUNCTION = "api_call"
     API_NODE = True
     CATEGORY = "api node/image/Recraft"
@@ -793,7 +832,9 @@ class RecraftTextToVectorNode:
     ):
         validate_string(prompt, strip_whitespace=False, max_length=1000)
         # create RecraftStyle so strings will be formatted properly (i.e. "None" will become None)
-        recraft_style = RecraftStyle(RecraftStyleV3.vector_illustration, substyle=substyle)
+        recraft_style = RecraftStyle(
+            RecraftStyleV3.vector_illustration, substyle=substyle
+        )
 
         controls_api = None
         if recraft_controls:
@@ -841,8 +882,10 @@ class RecraftVectorizeImageNode:
     Generates SVG synchronously from an input image.
     """
 
-    RETURN_TYPES = ("SVG",) # Changed
-    DESCRIPTION = cleandoc(__doc__ or "") if 'cleandoc' in globals() else __doc__ # Keep cleandoc if other nodes use it
+    RETURN_TYPES = ("SVG",)  # Changed
+    DESCRIPTION = (
+        cleandoc(__doc__ or "") if "cleandoc" in globals() else __doc__
+    )  # Keep cleandoc if other nodes use it
     FUNCTION = "api_call"
     API_NODE = True
     CATEGORY = "api node/image/Recraft"
@@ -851,10 +894,9 @@ class RecraftVectorizeImageNode:
     def INPUT_TYPES(s):
         return {
             "required": {
-                "image": (IO.IMAGE, ),
+                "image": (IO.IMAGE,),
             },
-            "optional": {
-            },
+            "optional": {},
             "hidden": {
                 "auth_token": "AUTH_TOKEN_COMFY_ORG",
                 "comfy_api_key": "API_KEY_COMFY_ORG",
@@ -878,7 +920,7 @@ class RecraftVectorizeImageNode:
             svgs.append(SVG(sub_bytes))
             pbar.update(1)
 
-        return (SVG.combine_all(svgs), )
+        return (SVG.combine_all(svgs),)
 
 
 class RecraftReplaceBackgroundNode:
@@ -896,7 +938,7 @@ class RecraftReplaceBackgroundNode:
     def INPUT_TYPES(s):
         return {
             "required": {
-                "image": (IO.IMAGE, ),
+                "image": (IO.IMAGE,),
                 "prompt": (
                     IO.STRING,
                     {
@@ -979,11 +1021,13 @@ class RecraftReplaceBackgroundNode:
                 request=request,
                 auth_kwargs=kwargs,
             )
-            images.append(torch.cat([bytesio_to_image_tensor(x) for x in sub_bytes], dim=0))
+            images.append(
+                torch.cat([bytesio_to_image_tensor(x) for x in sub_bytes], dim=0)
+            )
             pbar.update(1)
 
         images_tensor = torch.cat(images, dim=0)
-        return (images_tensor, )
+        return (images_tensor,)
 
 
 class RecraftRemoveBackgroundNode:
@@ -1001,10 +1045,9 @@ class RecraftRemoveBackgroundNode:
     def INPUT_TYPES(s):
         return {
             "required": {
-                "image": (IO.IMAGE, ),
+                "image": (IO.IMAGE,),
             },
-            "optional": {
-            },
+            "optional": {},
             "hidden": {
                 "auth_token": "AUTH_TOKEN_COMFY_ORG",
                 "comfy_api_key": "API_KEY_COMFY_ORG",
@@ -1025,12 +1068,14 @@ class RecraftRemoveBackgroundNode:
                 path="/proxy/recraft/images/removeBackground",
                 auth_kwargs=kwargs,
             )
-            images.append(torch.cat([bytesio_to_image_tensor(x) for x in sub_bytes], dim=0))
+            images.append(
+                torch.cat([bytesio_to_image_tensor(x) for x in sub_bytes], dim=0)
+            )
             pbar.update(1)
 
         images_tensor = torch.cat(images, dim=0)
         # use alpha channel as masks, in B,H,W format
-        masks_tensor = images_tensor[:,:,:,-1:].squeeze(-1)
+        masks_tensor = images_tensor[:, :, :, -1:].squeeze(-1)
         return (images_tensor, masks_tensor)
 
 
@@ -1052,10 +1097,9 @@ class RecraftCrispUpscaleNode:
     def INPUT_TYPES(s):
         return {
             "required": {
-                "image": (IO.IMAGE, ),
+                "image": (IO.IMAGE,),
             },
-            "optional": {
-            },
+            "optional": {},
             "hidden": {
                 "auth_token": "AUTH_TOKEN_COMFY_ORG",
                 "comfy_api_key": "API_KEY_COMFY_ORG",
@@ -1076,7 +1120,9 @@ class RecraftCrispUpscaleNode:
                 path=self.RECRAFT_PATH,
                 auth_kwargs=kwargs,
             )
-            images.append(torch.cat([bytesio_to_image_tensor(x) for x in sub_bytes], dim=0))
+            images.append(
+                torch.cat([bytesio_to_image_tensor(x) for x in sub_bytes], dim=0)
+            )
             pbar.update(1)
 
         images_tensor = torch.cat(images, dim=0)

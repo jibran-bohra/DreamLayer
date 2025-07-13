@@ -14,7 +14,9 @@ from tqdm import tqdm
 import logging
 
 import comfy.ops
+
 ops = comfy.ops.disable_weight_init
+
 
 def generate_dense_grid_points(
     bbox_min: np.ndarray,
@@ -60,15 +62,23 @@ class VanillaVolumeDecoder:
             bbox_min=bbox_min,
             bbox_max=bbox_max,
             octree_resolution=octree_resolution,
-            indexing="ij"
+            indexing="ij",
         )
-        xyz_samples = torch.from_numpy(xyz_samples).to(device, dtype=dtype).contiguous().reshape(-1, 3)
+        xyz_samples = (
+            torch.from_numpy(xyz_samples)
+            .to(device, dtype=dtype)
+            .contiguous()
+            .reshape(-1, 3)
+        )
 
         # 2. latents to 3d volume
         batch_logits = []
-        for start in tqdm(range(0, xyz_samples.shape[0], num_chunks), desc="Volume Decoding",
-                          disable=not enable_pbar):
-            chunk_queries = xyz_samples[start: start + num_chunks, :]
+        for start in tqdm(
+            range(0, xyz_samples.shape[0], num_chunks),
+            desc="Volume Decoding",
+            disable=not enable_pbar,
+        ):
+            chunk_queries = xyz_samples[start : start + num_chunks, :]
             chunk_queries = repeat(chunk_queries, "p c -> b p c", b=batch_size)
             logits = geo_decoder(queries=chunk_queries, latents=latents)
             batch_logits.append(logits)
@@ -116,28 +126,23 @@ class FourierEmbedder(nn.Module):
 
     """
 
-    def __init__(self,
-                 num_freqs: int = 6,
-                 logspace: bool = True,
-                 input_dim: int = 3,
-                 include_input: bool = True,
-                 include_pi: bool = True) -> None:
-
+    def __init__(
+        self,
+        num_freqs: int = 6,
+        logspace: bool = True,
+        input_dim: int = 3,
+        include_input: bool = True,
+        include_pi: bool = True,
+    ) -> None:
         """The initialization"""
 
         super().__init__()
 
         if logspace:
-            frequencies = 2.0 ** torch.arange(
-                num_freqs,
-                dtype=torch.float32
-            )
+            frequencies = 2.0 ** torch.arange(num_freqs, dtype=torch.float32)
         else:
             frequencies = torch.linspace(
-                1.0,
-                2.0 ** (num_freqs - 1),
-                num_freqs,
-                dtype=torch.float32
+                1.0, 2.0 ** (num_freqs - 1), num_freqs, dtype=torch.float32
             )
 
         if include_pi:
@@ -156,7 +161,7 @@ class FourierEmbedder(nn.Module):
         return out_dim
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """ Forward process.
+        """Forward process.
 
         Args:
             x: tensor of shape [..., dim]
@@ -167,7 +172,10 @@ class FourierEmbedder(nn.Module):
         """
 
         if self.num_freqs > 0:
-            embed = (x[..., None].contiguous() * self.frequencies.to(device=x.device, dtype=x.dtype)).view(*x.shape[:-1], -1)
+            embed = (
+                x[..., None].contiguous()
+                * self.frequencies.to(device=x.device, dtype=x.dtype)
+            ).view(*x.shape[:-1], -1)
             if self.include_input:
                 return torch.cat((x, embed.sin(), embed.cos()), dim=-1)
             else:
@@ -183,10 +191,9 @@ class CrossAttentionProcessor:
 
 
 class DropPath(nn.Module):
-    """Drop paths (Stochastic Depth) per sample  (when applied in main path of residual blocks).
-    """
+    """Drop paths (Stochastic Depth) per sample  (when applied in main path of residual blocks)."""
 
-    def __init__(self, drop_prob: float = 0., scale_by_keep: bool = True):
+    def __init__(self, drop_prob: float = 0.0, scale_by_keep: bool = True):
         super(DropPath, self).__init__()
         self.drop_prob = drop_prob
         self.scale_by_keep = scale_by_keep
@@ -201,33 +208,40 @@ class DropPath(nn.Module):
         'survival rate' as the argument.
 
         """
-        if self.drop_prob == 0. or not self.training:
+        if self.drop_prob == 0.0 or not self.training:
             return x
         keep_prob = 1 - self.drop_prob
-        shape = (x.shape[0],) + (1,) * (x.ndim - 1)  # work with diff dim tensors, not just 2D ConvNets
+        shape = (x.shape[0],) + (1,) * (
+            x.ndim - 1
+        )  # work with diff dim tensors, not just 2D ConvNets
         random_tensor = x.new_empty(shape).bernoulli_(keep_prob)
         if keep_prob > 0.0 and self.scale_by_keep:
             random_tensor.div_(keep_prob)
         return x * random_tensor
 
     def extra_repr(self):
-        return f'drop_prob={round(self.drop_prob, 3):0.3f}'
+        return f"drop_prob={round(self.drop_prob, 3):0.3f}"
 
 
 class MLP(nn.Module):
     def __init__(
-        self, *,
+        self,
+        *,
         width: int,
         expand_ratio: int = 4,
         output_width: int = None,
-        drop_path_rate: float = 0.0
+        drop_path_rate: float = 0.0,
     ):
         super().__init__()
         self.width = width
         self.c_fc = ops.Linear(width, width * expand_ratio)
-        self.c_proj = ops.Linear(width * expand_ratio, output_width if output_width is not None else width)
+        self.c_proj = ops.Linear(
+            width * expand_ratio, output_width if output_width is not None else width
+        )
         self.gelu = nn.GELU()
-        self.drop_path = DropPath(drop_path_rate) if drop_path_rate > 0. else nn.Identity()
+        self.drop_path = (
+            DropPath(drop_path_rate) if drop_path_rate > 0.0 else nn.Identity()
+        )
 
     def forward(self, x):
         return self.drop_path(self.c_proj(self.gelu(self.c_fc(x))))
@@ -235,17 +249,20 @@ class MLP(nn.Module):
 
 class QKVMultiheadCrossAttention(nn.Module):
     def __init__(
-        self,
-        *,
-        heads: int,
-        width=None,
-        qk_norm=False,
-        norm_layer=ops.LayerNorm
+        self, *, heads: int, width=None, qk_norm=False, norm_layer=ops.LayerNorm
     ):
         super().__init__()
         self.heads = heads
-        self.q_norm = norm_layer(width // heads, elementwise_affine=True, eps=1e-6) if qk_norm else nn.Identity()
-        self.k_norm = norm_layer(width // heads, elementwise_affine=True, eps=1e-6) if qk_norm else nn.Identity()
+        self.q_norm = (
+            norm_layer(width // heads, elementwise_affine=True, eps=1e-6)
+            if qk_norm
+            else nn.Identity()
+        )
+        self.k_norm = (
+            norm_layer(width // heads, elementwise_affine=True, eps=1e-6)
+            if qk_norm
+            else nn.Identity()
+        )
 
         self.attn_processor = CrossAttentionProcessor()
 
@@ -259,7 +276,9 @@ class QKVMultiheadCrossAttention(nn.Module):
 
         q = self.q_norm(q)
         k = self.k_norm(k)
-        q, k, v = map(lambda t: rearrange(t, 'b n h d -> b h n d', h=self.heads), (q, k, v))
+        q, k, v = map(
+            lambda t: rearrange(t, "b n h d -> b h n d", h=self.heads), (q, k, v)
+        )
         out = self.attn_processor(self, q, k, v)
         out = out.transpose(1, 2).reshape(bs, n_ctx, -1)
         return out
@@ -285,10 +304,7 @@ class MultiheadCrossAttention(nn.Module):
         self.c_kv = ops.Linear(self.data_width, width * 2, bias=qkv_bias)
         self.c_proj = ops.Linear(width, width)
         self.attention = QKVMultiheadCrossAttention(
-            heads=heads,
-            width=width,
-            norm_layer=norm_layer,
-            qk_norm=qk_norm
+            heads=heads, width=width, norm_layer=norm_layer, qk_norm=qk_norm
         )
         self.kv_cache = kv_cache
         self.data = None
@@ -298,7 +314,9 @@ class MultiheadCrossAttention(nn.Module):
         if self.kv_cache:
             if self.data is None:
                 self.data = self.c_kv(data)
-                logging.info('Save kv cache,this should be called only once for one mesh')
+                logging.info(
+                    "Save kv cache,this should be called only once for one mesh"
+                )
             data = self.data
         else:
             data = self.c_kv(data)
@@ -317,7 +335,7 @@ class ResidualCrossAttentionBlock(nn.Module):
         data_width: Optional[int] = None,
         qkv_bias: bool = True,
         norm_layer=ops.LayerNorm,
-        qk_norm: bool = False
+        qk_norm: bool = False,
     ):
         super().__init__()
 
@@ -330,7 +348,7 @@ class ResidualCrossAttentionBlock(nn.Module):
             data_width=data_width,
             qkv_bias=qkv_bias,
             norm_layer=norm_layer,
-            qk_norm=qk_norm
+            qk_norm=qk_norm,
         )
         self.ln_1 = norm_layer(width, elementwise_affine=True, eps=1e-6)
         self.ln_2 = norm_layer(data_width, elementwise_affine=True, eps=1e-6)
@@ -345,17 +363,20 @@ class ResidualCrossAttentionBlock(nn.Module):
 
 class QKVMultiheadAttention(nn.Module):
     def __init__(
-        self,
-        *,
-        heads: int,
-        width=None,
-        qk_norm=False,
-        norm_layer=ops.LayerNorm
+        self, *, heads: int, width=None, qk_norm=False, norm_layer=ops.LayerNorm
     ):
         super().__init__()
         self.heads = heads
-        self.q_norm = norm_layer(width // heads, elementwise_affine=True, eps=1e-6) if qk_norm else nn.Identity()
-        self.k_norm = norm_layer(width // heads, elementwise_affine=True, eps=1e-6) if qk_norm else nn.Identity()
+        self.q_norm = (
+            norm_layer(width // heads, elementwise_affine=True, eps=1e-6)
+            if qk_norm
+            else nn.Identity()
+        )
+        self.k_norm = (
+            norm_layer(width // heads, elementwise_affine=True, eps=1e-6)
+            if qk_norm
+            else nn.Identity()
+        )
 
     def forward(self, qkv):
         bs, n_ctx, width = qkv.shape
@@ -366,8 +387,14 @@ class QKVMultiheadAttention(nn.Module):
         q = self.q_norm(q)
         k = self.k_norm(k)
 
-        q, k, v = map(lambda t: rearrange(t, 'b n h d -> b h n d', h=self.heads), (q, k, v))
-        out = F.scaled_dot_product_attention(q, k, v).transpose(1, 2).reshape(bs, n_ctx, -1)
+        q, k, v = map(
+            lambda t: rearrange(t, "b n h d -> b h n d", h=self.heads), (q, k, v)
+        )
+        out = (
+            F.scaled_dot_product_attention(q, k, v)
+            .transpose(1, 2)
+            .reshape(bs, n_ctx, -1)
+        )
         return out
 
 
@@ -380,7 +407,7 @@ class MultiheadAttention(nn.Module):
         qkv_bias: bool,
         norm_layer=ops.LayerNorm,
         qk_norm: bool = False,
-        drop_path_rate: float = 0.0
+        drop_path_rate: float = 0.0,
     ):
         super().__init__()
         self.width = width
@@ -388,12 +415,11 @@ class MultiheadAttention(nn.Module):
         self.c_qkv = ops.Linear(width, width * 3, bias=qkv_bias)
         self.c_proj = ops.Linear(width, width)
         self.attention = QKVMultiheadAttention(
-            heads=heads,
-            width=width,
-            norm_layer=norm_layer,
-            qk_norm=qk_norm
+            heads=heads, width=width, norm_layer=norm_layer, qk_norm=qk_norm
         )
-        self.drop_path = DropPath(drop_path_rate) if drop_path_rate > 0. else nn.Identity()
+        self.drop_path = (
+            DropPath(drop_path_rate) if drop_path_rate > 0.0 else nn.Identity()
+        )
 
     def forward(self, x):
         x = self.c_qkv(x)
@@ -420,7 +446,7 @@ class ResidualAttentionBlock(nn.Module):
             qkv_bias=qkv_bias,
             norm_layer=norm_layer,
             qk_norm=qk_norm,
-            drop_path_rate=drop_path_rate
+            drop_path_rate=drop_path_rate,
         )
         self.ln_1 = norm_layer(width, elementwise_affine=True, eps=1e-6)
         self.mlp = MLP(width=width, drop_path_rate=drop_path_rate)
@@ -442,7 +468,7 @@ class Transformer(nn.Module):
         qkv_bias: bool = True,
         norm_layer=ops.LayerNorm,
         qk_norm: bool = False,
-        drop_path_rate: float = 0.0
+        drop_path_rate: float = 0.0,
     ):
         super().__init__()
         self.width = width
@@ -455,7 +481,7 @@ class Transformer(nn.Module):
                     qkv_bias=qkv_bias,
                     norm_layer=norm_layer,
                     qk_norm=qk_norm,
-                    drop_path_rate=drop_path_rate
+                    drop_path_rate=drop_path_rate,
                 )
                 for _ in range(layers)
             ]
@@ -468,7 +494,6 @@ class Transformer(nn.Module):
 
 
 class CrossAttentionDecoder(nn.Module):
-
     def __init__(
         self,
         *,
@@ -481,7 +506,7 @@ class CrossAttentionDecoder(nn.Module):
         enable_ln_post: bool = True,
         qkv_bias: bool = True,
         qk_norm: bool = False,
-        label_type: str = "binary"
+        label_type: str = "binary",
     ):
         super().__init__()
 
@@ -498,7 +523,7 @@ class CrossAttentionDecoder(nn.Module):
             mlp_expand_ratio=mlp_expand_ratio,
             heads=heads,
             qkv_bias=qkv_bias,
-            qk_norm=qk_norm
+            qk_norm=qk_norm,
         )
 
         if self.enable_ln_post:
@@ -509,7 +534,9 @@ class CrossAttentionDecoder(nn.Module):
 
     def forward(self, queries=None, query_embeddings=None, latents=None):
         if query_embeddings is None:
-            query_embeddings = self.query_proj(self.fourier_embedder(queries).to(latents.dtype))
+            query_embeddings = self.query_proj(
+                self.fourier_embedder(queries).to(latents.dtype)
+            )
         self.count += query_embeddings.shape[1]
         if self.downsample_ratio != 1:
             latents = self.latents_proj(latents)
@@ -542,7 +569,9 @@ class ShapeVAE(nn.Module):
         super().__init__()
         self.geo_decoder_ln_post = geo_decoder_ln_post
 
-        self.fourier_embedder = FourierEmbedder(num_freqs=num_freqs, include_pi=include_pi)
+        self.fourier_embedder = FourierEmbedder(
+            num_freqs=num_freqs, include_pi=include_pi
+        )
 
         self.post_kl = ops.Linear(embed_dim, width)
 
@@ -552,7 +581,7 @@ class ShapeVAE(nn.Module):
             heads=heads,
             qkv_bias=qkv_bias,
             qk_norm=qk_norm,
-            drop_path_rate=drop_path_rate
+            drop_path_rate=drop_path_rate,
         )
 
         self.geo_decoder = CrossAttentionDecoder(
@@ -580,7 +609,14 @@ class ShapeVAE(nn.Module):
         octree_resolution = kwargs.get("octree_resolution", 256)
         enable_pbar = kwargs.get("enable_pbar", True)
 
-        grid_logits = self.volume_decoder(latents, self.geo_decoder, bounds=bounds, num_chunks=num_chunks, octree_resolution=octree_resolution, enable_pbar=enable_pbar)
+        grid_logits = self.volume_decoder(
+            latents,
+            self.geo_decoder,
+            bounds=bounds,
+            num_chunks=num_chunks,
+            octree_resolution=octree_resolution,
+            enable_pbar=enable_pbar,
+        )
         return grid_logits.movedim(-2, -1)
 
     def encode(self, x):

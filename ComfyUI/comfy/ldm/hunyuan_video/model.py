@@ -1,4 +1,4 @@
-#Based on Flux code because of weird hunyuan video code license.
+# Based on Flux code because of weird hunyuan video code license.
 
 import torch
 import comfy.ldm.flux.layers
@@ -17,7 +17,7 @@ from comfy.ldm.flux.layers import (
     LastLayer,
     MLPEmbedder,
     SingleStreamBlock,
-    timestep_embedding
+    timestep_embedding,
 )
 
 import comfy.ldm.common_dit
@@ -42,39 +42,48 @@ class HunyuanVideoParams:
 
 
 class SelfAttentionRef(nn.Module):
-    def __init__(self, dim: int, qkv_bias: bool = False, dtype=None, device=None, operations=None):
+    def __init__(
+        self, dim: int, qkv_bias: bool = False, dtype=None, device=None, operations=None
+    ):
         super().__init__()
-        self.qkv = operations.Linear(dim, dim * 3, bias=qkv_bias, dtype=dtype, device=device)
+        self.qkv = operations.Linear(
+            dim, dim * 3, bias=qkv_bias, dtype=dtype, device=device
+        )
         self.proj = operations.Linear(dim, dim, dtype=dtype, device=device)
 
 
 class TokenRefinerBlock(nn.Module):
-    def __init__(
-        self,
-        hidden_size,
-        heads,
-        dtype=None,
-        device=None,
-        operations=None
-    ):
+    def __init__(self, hidden_size, heads, dtype=None, device=None, operations=None):
         super().__init__()
         self.heads = heads
         mlp_hidden_dim = hidden_size * 4
 
         self.adaLN_modulation = nn.Sequential(
             nn.SiLU(),
-            operations.Linear(hidden_size, 2 * hidden_size, bias=True, dtype=dtype, device=device),
+            operations.Linear(
+                hidden_size, 2 * hidden_size, bias=True, dtype=dtype, device=device
+            ),
         )
 
-        self.norm1 = operations.LayerNorm(hidden_size, elementwise_affine=True, eps=1e-6, dtype=dtype, device=device)
-        self.self_attn = SelfAttentionRef(hidden_size, True, dtype=dtype, device=device, operations=operations)
+        self.norm1 = operations.LayerNorm(
+            hidden_size, elementwise_affine=True, eps=1e-6, dtype=dtype, device=device
+        )
+        self.self_attn = SelfAttentionRef(
+            hidden_size, True, dtype=dtype, device=device, operations=operations
+        )
 
-        self.norm2 = operations.LayerNorm(hidden_size, elementwise_affine=True, eps=1e-6, dtype=dtype, device=device)
+        self.norm2 = operations.LayerNorm(
+            hidden_size, elementwise_affine=True, eps=1e-6, dtype=dtype, device=device
+        )
 
         self.mlp = nn.Sequential(
-            operations.Linear(hidden_size, mlp_hidden_dim, bias=True, dtype=dtype, device=device),
+            operations.Linear(
+                hidden_size, mlp_hidden_dim, bias=True, dtype=dtype, device=device
+            ),
             nn.SiLU(),
-            operations.Linear(mlp_hidden_dim, hidden_size, bias=True, dtype=dtype, device=device),
+            operations.Linear(
+                mlp_hidden_dim, hidden_size, bias=True, dtype=dtype, device=device
+            ),
         )
 
     def forward(self, x, c, mask):
@@ -82,7 +91,9 @@ class TokenRefinerBlock(nn.Module):
 
         norm_x = self.norm1(x)
         qkv = self.self_attn.qkv(norm_x)
-        q, k, v = qkv.reshape(qkv.shape[0], qkv.shape[1], 3, self.heads, -1).permute(2, 0, 3, 1, 4)
+        q, k, v = qkv.reshape(qkv.shape[0], qkv.shape[1], 3, self.heads, -1).permute(
+            2, 0, 3, 1, 4
+        )
         attn = optimized_attention(q, k, v, self.heads, mask=mask, skip_reshape=True)
 
         x = x + self.self_attn.proj(attn) * mod1.unsqueeze(1)
@@ -92,13 +103,7 @@ class TokenRefinerBlock(nn.Module):
 
 class IndividualTokenRefiner(nn.Module):
     def __init__(
-        self,
-        hidden_size,
-        heads,
-        num_blocks,
-        dtype=None,
-        device=None,
-        operations=None
+        self, hidden_size, heads, num_blocks, dtype=None, device=None, operations=None
     ):
         super().__init__()
         self.blocks = nn.ModuleList(
@@ -108,7 +113,7 @@ class IndividualTokenRefiner(nn.Module):
                     heads=heads,
                     dtype=dtype,
                     device=device,
-                    operations=operations
+                    operations=operations,
                 )
                 for _ in range(num_blocks)
             ]
@@ -117,13 +122,14 @@ class IndividualTokenRefiner(nn.Module):
     def forward(self, x, c, mask):
         m = None
         if mask is not None:
-            m = mask.view(mask.shape[0], 1, 1, mask.shape[1]).repeat(1, 1, mask.shape[1], 1)
+            m = mask.view(mask.shape[0], 1, 1, mask.shape[1]).repeat(
+                1, 1, mask.shape[1], 1
+            )
             m = m + m.transpose(2, 3)
 
         for block in self.blocks:
             x = block(x, c, m)
         return x
-
 
 
 class TokenRefiner(nn.Module):
@@ -135,14 +141,27 @@ class TokenRefiner(nn.Module):
         num_blocks,
         dtype=None,
         device=None,
-        operations=None
+        operations=None,
     ):
         super().__init__()
 
-        self.input_embedder = operations.Linear(text_dim, hidden_size, bias=True, dtype=dtype, device=device)
-        self.t_embedder = MLPEmbedder(256, hidden_size, dtype=dtype, device=device, operations=operations)
-        self.c_embedder = MLPEmbedder(text_dim, hidden_size, dtype=dtype, device=device, operations=operations)
-        self.individual_token_refiner = IndividualTokenRefiner(hidden_size, heads, num_blocks, dtype=dtype, device=device, operations=operations)
+        self.input_embedder = operations.Linear(
+            text_dim, hidden_size, bias=True, dtype=dtype, device=device
+        )
+        self.t_embedder = MLPEmbedder(
+            256, hidden_size, dtype=dtype, device=device, operations=operations
+        )
+        self.c_embedder = MLPEmbedder(
+            text_dim, hidden_size, dtype=dtype, device=device, operations=operations
+        )
+        self.individual_token_refiner = IndividualTokenRefiner(
+            hidden_size,
+            heads,
+            num_blocks,
+            dtype=dtype,
+            device=device,
+            operations=operations,
+        )
 
     def forward(
         self,
@@ -150,7 +169,9 @@ class TokenRefiner(nn.Module):
         timesteps,
         mask,
     ):
-        t = self.t_embedder(timestep_embedding(timesteps, 256, time_factor=1.0).to(x.dtype))
+        t = self.t_embedder(
+            timestep_embedding(timesteps, 256, time_factor=1.0).to(x.dtype)
+        )
         # m = mask.float().unsqueeze(-1)
         # c = (x.float() * m).sum(dim=1) / m.sum(dim=1) #TODO: the following works when the x.shape is the same length as the tokens but might break otherwise
         c = x.sum(dim=1) / x.shape[1]
@@ -160,12 +181,21 @@ class TokenRefiner(nn.Module):
         x = self.individual_token_refiner(x, c, mask)
         return x
 
+
 class HunyuanVideo(nn.Module):
     """
     Transformer model for flow matching on sequences.
     """
 
-    def __init__(self, image_model=None, final_layer=True, dtype=None, device=None, operations=None, **kwargs):
+    def __init__(
+        self,
+        image_model=None,
+        final_layer=True,
+        dtype=None,
+        device=None,
+        operations=None,
+        **kwargs,
+    ):
         super().__init__()
         self.dtype = dtype
         params = HunyuanVideoParams(**kwargs)
@@ -179,19 +209,60 @@ class HunyuanVideo(nn.Module):
             )
         pe_dim = params.hidden_size // params.num_heads
         if sum(params.axes_dim) != pe_dim:
-            raise ValueError(f"Got {params.axes_dim} but expected positional dim {pe_dim}")
+            raise ValueError(
+                f"Got {params.axes_dim} but expected positional dim {pe_dim}"
+            )
         self.hidden_size = params.hidden_size
         self.num_heads = params.num_heads
-        self.pe_embedder = EmbedND(dim=pe_dim, theta=params.theta, axes_dim=params.axes_dim)
-
-        self.img_in = comfy.ldm.modules.diffusionmodules.mmdit.PatchEmbed(None, self.patch_size, self.in_channels, self.hidden_size, conv3d=True, dtype=dtype, device=device, operations=operations)
-        self.time_in = MLPEmbedder(in_dim=256, hidden_dim=self.hidden_size, dtype=dtype, device=device, operations=operations)
-        self.vector_in = MLPEmbedder(params.vec_in_dim, self.hidden_size, dtype=dtype, device=device, operations=operations)
-        self.guidance_in = (
-            MLPEmbedder(in_dim=256, hidden_dim=self.hidden_size, dtype=dtype, device=device, operations=operations) if params.guidance_embed else nn.Identity()
+        self.pe_embedder = EmbedND(
+            dim=pe_dim, theta=params.theta, axes_dim=params.axes_dim
         )
 
-        self.txt_in = TokenRefiner(params.context_in_dim, self.hidden_size, self.num_heads, 2, dtype=dtype, device=device, operations=operations)
+        self.img_in = comfy.ldm.modules.diffusionmodules.mmdit.PatchEmbed(
+            None,
+            self.patch_size,
+            self.in_channels,
+            self.hidden_size,
+            conv3d=True,
+            dtype=dtype,
+            device=device,
+            operations=operations,
+        )
+        self.time_in = MLPEmbedder(
+            in_dim=256,
+            hidden_dim=self.hidden_size,
+            dtype=dtype,
+            device=device,
+            operations=operations,
+        )
+        self.vector_in = MLPEmbedder(
+            params.vec_in_dim,
+            self.hidden_size,
+            dtype=dtype,
+            device=device,
+            operations=operations,
+        )
+        self.guidance_in = (
+            MLPEmbedder(
+                in_dim=256,
+                hidden_dim=self.hidden_size,
+                dtype=dtype,
+                device=device,
+                operations=operations,
+            )
+            if params.guidance_embed
+            else nn.Identity()
+        )
+
+        self.txt_in = TokenRefiner(
+            params.context_in_dim,
+            self.hidden_size,
+            self.num_heads,
+            2,
+            dtype=dtype,
+            device=device,
+            operations=operations,
+        )
 
         self.double_blocks = nn.ModuleList(
             [
@@ -201,7 +272,9 @@ class HunyuanVideo(nn.Module):
                     mlp_ratio=params.mlp_ratio,
                     qkv_bias=params.qkv_bias,
                     flipped_img_txt=True,
-                    dtype=dtype, device=device, operations=operations
+                    dtype=dtype,
+                    device=device,
+                    operations=operations,
                 )
                 for _ in range(params.depth)
             ]
@@ -209,13 +282,27 @@ class HunyuanVideo(nn.Module):
 
         self.single_blocks = nn.ModuleList(
             [
-                SingleStreamBlock(self.hidden_size, self.num_heads, mlp_ratio=params.mlp_ratio, dtype=dtype, device=device, operations=operations)
+                SingleStreamBlock(
+                    self.hidden_size,
+                    self.num_heads,
+                    mlp_ratio=params.mlp_ratio,
+                    dtype=dtype,
+                    device=device,
+                    operations=operations,
+                )
                 for _ in range(params.depth_single_blocks)
             ]
         )
 
         if final_layer:
-            self.final_layer = LastLayer(self.hidden_size, self.patch_size[-1], self.out_channels, dtype=dtype, device=device, operations=operations)
+            self.final_layer = LastLayer(
+                self.hidden_size,
+                self.patch_size[-1],
+                self.out_channels,
+                dtype=dtype,
+                device=device,
+                operations=operations,
+            )
 
     def forward_orig(
         self,
@@ -237,31 +324,42 @@ class HunyuanVideo(nn.Module):
         initial_shape = list(img.shape)
         # running on sequences img
         img = self.img_in(img)
-        vec = self.time_in(timestep_embedding(timesteps, 256, time_factor=1.0).to(img.dtype))
+        vec = self.time_in(
+            timestep_embedding(timesteps, 256, time_factor=1.0).to(img.dtype)
+        )
 
         if ref_latent is not None:
             ref_latent_ids = self.img_ids(ref_latent)
             ref_latent = self.img_in(ref_latent)
             img = torch.cat([ref_latent, img], dim=-2)
             ref_latent_ids[..., 0] = -1
-            ref_latent_ids[..., 2] += (initial_shape[-1] // self.patch_size[-1])
+            ref_latent_ids[..., 2] += initial_shape[-1] // self.patch_size[-1]
             img_ids = torch.cat([ref_latent_ids, img_ids], dim=-2)
 
         if guiding_frame_index is not None:
-            token_replace_vec = self.time_in(timestep_embedding(guiding_frame_index, 256, time_factor=1.0))
-            vec_ = self.vector_in(y[:, :self.params.vec_in_dim])
-            vec = torch.cat([(vec_ + token_replace_vec).unsqueeze(1), (vec_ + vec).unsqueeze(1)], dim=1)
-            frame_tokens = (initial_shape[-1] // self.patch_size[-1]) * (initial_shape[-2] // self.patch_size[-2])
+            token_replace_vec = self.time_in(
+                timestep_embedding(guiding_frame_index, 256, time_factor=1.0)
+            )
+            vec_ = self.vector_in(y[:, : self.params.vec_in_dim])
+            vec = torch.cat(
+                [(vec_ + token_replace_vec).unsqueeze(1), (vec_ + vec).unsqueeze(1)],
+                dim=1,
+            )
+            frame_tokens = (initial_shape[-1] // self.patch_size[-1]) * (
+                initial_shape[-2] // self.patch_size[-2]
+            )
             modulation_dims = [(0, frame_tokens, 0), (frame_tokens, None, 1)]
             modulation_dims_txt = [(0, None, 1)]
         else:
-            vec = vec + self.vector_in(y[:, :self.params.vec_in_dim])
+            vec = vec + self.vector_in(y[:, : self.params.vec_in_dim])
             modulation_dims = None
             modulation_dims_txt = None
 
         if self.params.guidance_embed:
             if guidance is not None:
-                vec = vec + self.guidance_in(timestep_embedding(guidance, 256).to(img.dtype))
+                vec = vec + self.guidance_in(
+                    timestep_embedding(guidance, 256).to(img.dtype)
+                )
 
         if txt_mask is not None and not torch.is_floating_point(txt_mask):
             txt_mask = (txt_mask - 1).to(img.dtype) * torch.finfo(img.dtype).max
@@ -274,7 +372,9 @@ class HunyuanVideo(nn.Module):
         img_len = img.shape[1]
         if txt_mask is not None:
             attn_mask_len = img_len + txt.shape[1]
-            attn_mask = torch.zeros((1, 1, attn_mask_len), dtype=img.dtype, device=img.device)
+            attn_mask = torch.zeros(
+                (1, 1, attn_mask_len), dtype=img.dtype, device=img.device
+            )
             attn_mask[:, 0, img_len:] = txt_mask
         else:
             attn_mask = None
@@ -282,18 +382,46 @@ class HunyuanVideo(nn.Module):
         blocks_replace = patches_replace.get("dit", {})
         for i, block in enumerate(self.double_blocks):
             if ("double_block", i) in blocks_replace:
+
                 def block_wrap(args):
                     out = {}
-                    out["img"], out["txt"] = block(img=args["img"], txt=args["txt"], vec=args["vec"], pe=args["pe"], attn_mask=args["attention_mask"], modulation_dims_img=args["modulation_dims_img"], modulation_dims_txt=args["modulation_dims_txt"])
+                    out["img"], out["txt"] = block(
+                        img=args["img"],
+                        txt=args["txt"],
+                        vec=args["vec"],
+                        pe=args["pe"],
+                        attn_mask=args["attention_mask"],
+                        modulation_dims_img=args["modulation_dims_img"],
+                        modulation_dims_txt=args["modulation_dims_txt"],
+                    )
                     return out
 
-                out = blocks_replace[("double_block", i)]({"img": img, "txt": txt, "vec": vec, "pe": pe, "attention_mask": attn_mask, 'modulation_dims_img': modulation_dims, 'modulation_dims_txt': modulation_dims_txt}, {"original_block": block_wrap})
+                out = blocks_replace[("double_block", i)](
+                    {
+                        "img": img,
+                        "txt": txt,
+                        "vec": vec,
+                        "pe": pe,
+                        "attention_mask": attn_mask,
+                        "modulation_dims_img": modulation_dims,
+                        "modulation_dims_txt": modulation_dims_txt,
+                    },
+                    {"original_block": block_wrap},
+                )
                 txt = out["txt"]
                 img = out["img"]
             else:
-                img, txt = block(img=img, txt=txt, vec=vec, pe=pe, attn_mask=attn_mask, modulation_dims_img=modulation_dims, modulation_dims_txt=modulation_dims_txt)
+                img, txt = block(
+                    img=img,
+                    txt=txt,
+                    vec=vec,
+                    pe=pe,
+                    attn_mask=attn_mask,
+                    modulation_dims_img=modulation_dims,
+                    modulation_dims_txt=modulation_dims_txt,
+                )
 
-            if control is not None: # Controlnet
+            if control is not None:  # Controlnet
                 control_i = control.get("input")
                 if i < len(control_i):
                     add = control_i[i]
@@ -304,52 +432,116 @@ class HunyuanVideo(nn.Module):
 
         for i, block in enumerate(self.single_blocks):
             if ("single_block", i) in blocks_replace:
+
                 def block_wrap(args):
                     out = {}
-                    out["img"] = block(args["img"], vec=args["vec"], pe=args["pe"], attn_mask=args["attention_mask"], modulation_dims=args["modulation_dims"])
+                    out["img"] = block(
+                        args["img"],
+                        vec=args["vec"],
+                        pe=args["pe"],
+                        attn_mask=args["attention_mask"],
+                        modulation_dims=args["modulation_dims"],
+                    )
                     return out
 
-                out = blocks_replace[("single_block", i)]({"img": img, "vec": vec, "pe": pe, "attention_mask": attn_mask, 'modulation_dims': modulation_dims}, {"original_block": block_wrap})
+                out = blocks_replace[("single_block", i)](
+                    {
+                        "img": img,
+                        "vec": vec,
+                        "pe": pe,
+                        "attention_mask": attn_mask,
+                        "modulation_dims": modulation_dims,
+                    },
+                    {"original_block": block_wrap},
+                )
                 img = out["img"]
             else:
-                img = block(img, vec=vec, pe=pe, attn_mask=attn_mask, modulation_dims=modulation_dims)
+                img = block(
+                    img,
+                    vec=vec,
+                    pe=pe,
+                    attn_mask=attn_mask,
+                    modulation_dims=modulation_dims,
+                )
 
-            if control is not None: # Controlnet
+            if control is not None:  # Controlnet
                 control_o = control.get("output")
                 if i < len(control_o):
                     add = control_o[i]
                     if add is not None:
-                        img[:, : img_len] += add
+                        img[:, :img_len] += add
 
-        img = img[:, : img_len]
+        img = img[:, :img_len]
         if ref_latent is not None:
-            img = img[:, ref_latent.shape[1]:]
+            img = img[:, ref_latent.shape[1] :]
 
-        img = self.final_layer(img, vec, modulation_dims=modulation_dims)  # (N, T, patch_size ** 2 * out_channels)
+        img = self.final_layer(
+            img, vec, modulation_dims=modulation_dims
+        )  # (N, T, patch_size ** 2 * out_channels)
 
         shape = initial_shape[-3:]
         for i in range(len(shape)):
             shape[i] = shape[i] // self.patch_size[i]
-        img = img.reshape([img.shape[0]] + shape + [self.out_channels] + self.patch_size)
+        img = img.reshape(
+            [img.shape[0]] + shape + [self.out_channels] + self.patch_size
+        )
         img = img.permute(0, 4, 1, 5, 2, 6, 3, 7)
-        img = img.reshape(initial_shape[0], self.out_channels, initial_shape[2], initial_shape[3], initial_shape[4])
+        img = img.reshape(
+            initial_shape[0],
+            self.out_channels,
+            initial_shape[2],
+            initial_shape[3],
+            initial_shape[4],
+        )
         return img
 
     def img_ids(self, x):
         bs, c, t, h, w = x.shape
         patch_size = self.patch_size
-        t_len = ((t + (patch_size[0] // 2)) // patch_size[0])
-        h_len = ((h + (patch_size[1] // 2)) // patch_size[1])
-        w_len = ((w + (patch_size[2] // 2)) // patch_size[2])
+        t_len = (t + (patch_size[0] // 2)) // patch_size[0]
+        h_len = (h + (patch_size[1] // 2)) // patch_size[1]
+        w_len = (w + (patch_size[2] // 2)) // patch_size[2]
         img_ids = torch.zeros((t_len, h_len, w_len, 3), device=x.device, dtype=x.dtype)
-        img_ids[:, :, :, 0] = img_ids[:, :, :, 0] + torch.linspace(0, t_len - 1, steps=t_len, device=x.device, dtype=x.dtype).reshape(-1, 1, 1)
-        img_ids[:, :, :, 1] = img_ids[:, :, :, 1] + torch.linspace(0, h_len - 1, steps=h_len, device=x.device, dtype=x.dtype).reshape(1, -1, 1)
-        img_ids[:, :, :, 2] = img_ids[:, :, :, 2] + torch.linspace(0, w_len - 1, steps=w_len, device=x.device, dtype=x.dtype).reshape(1, 1, -1)
+        img_ids[:, :, :, 0] = img_ids[:, :, :, 0] + torch.linspace(
+            0, t_len - 1, steps=t_len, device=x.device, dtype=x.dtype
+        ).reshape(-1, 1, 1)
+        img_ids[:, :, :, 1] = img_ids[:, :, :, 1] + torch.linspace(
+            0, h_len - 1, steps=h_len, device=x.device, dtype=x.dtype
+        ).reshape(1, -1, 1)
+        img_ids[:, :, :, 2] = img_ids[:, :, :, 2] + torch.linspace(
+            0, w_len - 1, steps=w_len, device=x.device, dtype=x.dtype
+        ).reshape(1, 1, -1)
         return repeat(img_ids, "t h w c -> b (t h w) c", b=bs)
 
-    def forward(self, x, timestep, context, y, guidance=None, attention_mask=None, guiding_frame_index=None, ref_latent=None, control=None, transformer_options={}, **kwargs):
+    def forward(
+        self,
+        x,
+        timestep,
+        context,
+        y,
+        guidance=None,
+        attention_mask=None,
+        guiding_frame_index=None,
+        ref_latent=None,
+        control=None,
+        transformer_options={},
+        **kwargs,
+    ):
         bs, c, t, h, w = x.shape
         img_ids = self.img_ids(x)
         txt_ids = torch.zeros((bs, context.shape[1], 3), device=x.device, dtype=x.dtype)
-        out = self.forward_orig(x, img_ids, context, txt_ids, attention_mask, timestep, y, guidance, guiding_frame_index, ref_latent, control=control, transformer_options=transformer_options)
+        out = self.forward_orig(
+            x,
+            img_ids,
+            context,
+            txt_ids,
+            attention_mask,
+            timestep,
+            y,
+            guidance,
+            guiding_frame_index,
+            ref_latent,
+            control=control,
+            transformer_options=transformer_options,
+        )
         return out

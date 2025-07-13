@@ -41,7 +41,7 @@ def convert_mask_to_image(mask: torch.Tensor):
     Make mask have the expected amount of dims (4) and channels (3) to be recognized as an image.
     """
     mask = mask.unsqueeze(-1)
-    mask = torch.cat([mask]*3, dim=-1)
+    mask = torch.cat([mask] * 3, dim=-1)
     return mask
 
 
@@ -92,9 +92,7 @@ def _poll_until_generated(
                 BFLStatus.content_moderated,
             ]:
                 status = result["status"]
-                raise Exception(
-                    f"BFL API did not return an image due to: {status}."
-                )
+                raise Exception(f"BFL API did not return an image due to: {status}.")
             elif result["status"] == BFLStatus.error:
                 raise Exception(f"BFL API encountered an error: {result}.")
             elif result["status"] == BFLStatus.pending:
@@ -116,6 +114,7 @@ def _poll_until_generated(
             )
         else:
             raise Exception(f"BFL API encountered an error: {response.json()}")
+
 
 def convert_image_to_base64(image: torch.Tensor):
     scaled_image = downscale_image_tensor(image, total_pixels=2048 * 2048)
@@ -310,7 +309,7 @@ class FluxKontextProImageNode(ComfyNodeABC):
                         "min": 0.1,
                         "max": 99.0,
                         "step": 0.1,
-                        "tooltip": "Guidance strength for the image generation process"
+                        "tooltip": "Guidance strength for the image generation process",
                     },
                 ),
                 "steps": (
@@ -319,7 +318,7 @@ class FluxKontextProImageNode(ComfyNodeABC):
                         "default": 50,
                         "min": 1,
                         "max": 150,
-                        "tooltip": "Number of steps for the image generation process"
+                        "tooltip": "Number of steps for the image generation process",
                     },
                 ),
                 "seed": (
@@ -378,7 +377,7 @@ class FluxKontextProImageNode(ComfyNodeABC):
         aspect_ratio: str,
         guidance: float,
         steps: int,
-        input_image: Optional[torch.Tensor]=None,
+        input_image: Optional[torch.Tensor] = None,
         seed=0,
         prompt_upsampling=False,
         unique_id: Union[str, None] = None,
@@ -410,7 +409,7 @@ class FluxKontextProImageNode(ComfyNodeABC):
                     input_image
                     if input_image is None
                     else convert_image_to_base64(input_image)
-                )
+                ),
             ),
             api_base="https://api.bfl.ai",
             auth_kwargs=kwargs,
@@ -520,10 +519,10 @@ class FluxProImageNode(ComfyNodeABC):
         **kwargs,
     ):
         image_prompt = (
-                    image_prompt
-                    if image_prompt is None
-                    else convert_image_to_base64(image_prompt)
-                )
+            image_prompt
+            if image_prompt is None
+            else convert_image_to_base64(image_prompt)
+        )
 
         operation = SynchronousOperation(
             endpoint=ApiEndpoint(
@@ -578,7 +577,7 @@ class FluxProExpandNode(ComfyNodeABC):
                         "default": 0,
                         "min": 0,
                         "max": 2048,
-                        "tooltip": "Number of pixels to expand at the top of the image"
+                        "tooltip": "Number of pixels to expand at the top of the image",
                     },
                 ),
                 "bottom": (
@@ -587,7 +586,7 @@ class FluxProExpandNode(ComfyNodeABC):
                         "default": 0,
                         "min": 0,
                         "max": 2048,
-                        "tooltip": "Number of pixels to expand at the bottom of the image"
+                        "tooltip": "Number of pixels to expand at the bottom of the image",
                     },
                 ),
                 "left": (
@@ -596,7 +595,7 @@ class FluxProExpandNode(ComfyNodeABC):
                         "default": 0,
                         "min": 0,
                         "max": 2048,
-                        "tooltip": "Number of pixels to expand at the left side of the image"
+                        "tooltip": "Number of pixels to expand at the left side of the image",
                     },
                 ),
                 "right": (
@@ -605,7 +604,7 @@ class FluxProExpandNode(ComfyNodeABC):
                         "default": 0,
                         "min": 0,
                         "max": 2048,
-                        "tooltip": "Number of pixels to expand at the right side of the image"
+                        "tooltip": "Number of pixels to expand at the right side of the image",
                     },
                 ),
                 "guidance": (
@@ -614,7 +613,7 @@ class FluxProExpandNode(ComfyNodeABC):
                         "default": 60,
                         "min": 1.5,
                         "max": 100,
-                        "tooltip": "Guidance strength for the image generation process"
+                        "tooltip": "Guidance strength for the image generation process",
                     },
                 ),
                 "steps": (
@@ -623,7 +622,7 @@ class FluxProExpandNode(ComfyNodeABC):
                         "default": 50,
                         "min": 15,
                         "max": 50,
-                        "tooltip": "Number of steps for the image generation process"
+                        "tooltip": "Number of steps for the image generation process",
                     },
                 ),
                 "seed": (
@@ -692,7 +691,6 @@ class FluxProExpandNode(ComfyNodeABC):
         return (output_image,)
 
 
-
 class FluxProFillNode(ComfyNodeABC):
     """
     Inpaints image based on mask and prompt.
@@ -725,7 +723,7 @@ class FluxProFillNode(ComfyNodeABC):
                         "default": 60,
                         "min": 1.5,
                         "max": 100,
-                        "tooltip": "Guidance strength for the image generation process"
+                        "tooltip": "Guidance strength for the image generation process",
                     },
                 ),
                 "steps": (
@@ -734,7 +732,7 @@ class FluxProFillNode(ComfyNodeABC):
                         "default": 50,
                         "min": 15,
                         "max": 50,
-                        "tooltip": "Number of steps for the image generation process"
+                        "tooltip": "Number of steps for the image generation process",
                     },
                 ),
                 "seed": (
@@ -835,7 +833,7 @@ class FluxProCannyNode(ComfyNodeABC):
                         "min": 0.01,
                         "max": 0.99,
                         "step": 0.01,
-                        "tooltip": "Low threshold for Canny edge detection; ignored if skip_processing is True"
+                        "tooltip": "Low threshold for Canny edge detection; ignored if skip_processing is True",
                     },
                 ),
                 "canny_high_threshold": (
@@ -845,7 +843,7 @@ class FluxProCannyNode(ComfyNodeABC):
                         "min": 0.01,
                         "max": 0.99,
                         "step": 0.01,
-                        "tooltip": "High threshold for Canny edge detection; ignored if skip_processing is True"
+                        "tooltip": "High threshold for Canny edge detection; ignored if skip_processing is True",
                     },
                 ),
                 "skip_preprocessing": (
@@ -861,7 +859,7 @@ class FluxProCannyNode(ComfyNodeABC):
                         "default": 30,
                         "min": 1,
                         "max": 100,
-                        "tooltip": "Guidance strength for the image generation process"
+                        "tooltip": "Guidance strength for the image generation process",
                     },
                 ),
                 "steps": (
@@ -870,7 +868,7 @@ class FluxProCannyNode(ComfyNodeABC):
                         "default": 50,
                         "min": 15,
                         "max": 50,
-                        "tooltip": "Number of steps for the image generation process"
+                        "tooltip": "Number of steps for the image generation process",
                     },
                 ),
                 "seed": (
@@ -920,9 +918,9 @@ class FluxProCannyNode(ComfyNodeABC):
         # scale canny threshold between 0-500, to match BFL's API
         def scale_value(value: float, min_val=0, max_val=500):
             return min_val + value * (max_val - min_val)
+
         canny_low_threshold = int(round(scale_value(canny_low_threshold)))
         canny_high_threshold = int(round(scale_value(canny_high_threshold)))
-
 
         if skip_preprocessing:
             preprocessed_image = control_image
@@ -993,7 +991,7 @@ class FluxProDepthNode(ComfyNodeABC):
                         "default": 15,
                         "min": 1,
                         "max": 100,
-                        "tooltip": "Guidance strength for the image generation process"
+                        "tooltip": "Guidance strength for the image generation process",
                     },
                 ),
                 "steps": (
@@ -1002,7 +1000,7 @@ class FluxProDepthNode(ComfyNodeABC):
                         "default": 50,
                         "min": 15,
                         "max": 50,
-                        "tooltip": "Number of steps for the image generation process"
+                        "tooltip": "Number of steps for the image generation process",
                     },
                 ),
                 "seed": (
@@ -1042,7 +1040,7 @@ class FluxProDepthNode(ComfyNodeABC):
         unique_id: Union[str, None] = None,
         **kwargs,
     ):
-        control_image = convert_image_to_base64(control_image[:,:,:,:3])
+        control_image = convert_image_to_base64(control_image[:, :, :, :3])
         preprocessed_image = None
 
         if skip_preprocessing:

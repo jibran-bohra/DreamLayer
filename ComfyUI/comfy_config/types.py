@@ -6,6 +6,7 @@ from typing import List, Optional
 # must remain synchronized with the corresponding files in the https://github.com/Comfy-Org/comfy-cli/blob/main/comfy_cli/registry/types.py.
 # Any changes to one must be reflected in the other to maintain consistency.
 
+
 class NodeVersion(BaseModel):
     changelog: str
     dependencies: List[str]

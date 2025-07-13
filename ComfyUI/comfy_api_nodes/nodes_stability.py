@@ -66,22 +66,24 @@ class StabilityStableImageUltraNode:
                     {
                         "multiline": True,
                         "default": "",
-                        "tooltip": "What you wish to see in the output image. A strong, descriptive prompt that clearly defines" +
-                                    "What you wish to see in the output image. A strong, descriptive prompt that clearly defines" +
-                                    "elements, colors, and subjects will lead to better results. " +
-                                    "To control the weight of a given word use the format `(word:weight)`," +
-                                    "where `word` is the word you'd like to control the weight of and `weight`" +
-                                    "is a value between 0 and 1. For example: `The sky was a crisp (blue:0.3) and (green:0.8)`" +
-                                    "would convey a sky that was blue and green, but more green than blue."
+                        "tooltip": "What you wish to see in the output image. A strong, descriptive prompt that clearly defines"
+                        + "What you wish to see in the output image. A strong, descriptive prompt that clearly defines"
+                        + "elements, colors, and subjects will lead to better results. "
+                        + "To control the weight of a given word use the format `(word:weight)`,"
+                        + "where `word` is the word you'd like to control the weight of and `weight`"
+                        + "is a value between 0 and 1. For example: `The sky was a crisp (blue:0.3) and (green:0.8)`"
+                        + "would convey a sky that was blue and green, but more green than blue.",
                     },
                 ),
-                "aspect_ratio": ([x.value for x in StabilityAspectRatio],
+                "aspect_ratio": (
+                    [x.value for x in StabilityAspectRatio],
                     {
                         "default": StabilityAspectRatio.ratio_1_1,
                         "tooltip": "Aspect ratio of generated image.",
                     },
                 ),
-                "style_preset": (get_stability_style_presets(),
+                "style_preset": (
+                    get_stability_style_presets(),
                     {
                         "tooltip": "Optional desired style of generated image.",
                     },
@@ -104,7 +106,7 @@ class StabilityStableImageUltraNode:
                     {
                         "default": "",
                         "forceInput": True,
-                        "tooltip": "A blurb of text describing what you do not wish to see in the output image. This is an advanced feature."
+                        "tooltip": "A blurb of text describing what you do not wish to see in the output image. This is an advanced feature.",
                     },
                 ),
                 "image_denoise": (
@@ -124,14 +126,22 @@ class StabilityStableImageUltraNode:
             },
         }
 
-    def api_call(self, prompt: str, aspect_ratio: str, style_preset: str, seed: int,
-                 negative_prompt: str=None, image: torch.Tensor = None, image_denoise: float=None,
-                 **kwargs):
+    def api_call(
+        self,
+        prompt: str,
+        aspect_ratio: str,
+        style_preset: str,
+        seed: int,
+        negative_prompt: str = None,
+        image: torch.Tensor = None,
+        image_denoise: float = None,
+        **kwargs,
+    ):
         validate_string(prompt, strip_whitespace=False)
         # prepare image binary if image present
         image_binary = None
         if image is not None:
-            image_binary = tensor_to_bytesio(image, total_pixels=1504*1504).read()
+            image_binary = tensor_to_bytesio(image, total_pixels=1504 * 1504).read()
         else:
             image_denoise = None
 
@@ -140,9 +150,7 @@ class StabilityStableImageUltraNode:
         if style_preset == "None":
             style_preset = None
 
-        files = {
-            "image": image_binary
-        }
+        files = {"image": image_binary}
 
         operation = SynchronousOperation(
             endpoint=ApiEndpoint(
@@ -166,7 +174,9 @@ class StabilityStableImageUltraNode:
         response_api = operation.execute()
 
         if response_api.finish_reason != "SUCCESS":
-            raise Exception(f"Stable Image Ultra generation failed: {response_api.finish_reason}.")
+            raise Exception(
+                f"Stable Image Ultra generation failed: {response_api.finish_reason}."
+            )
 
         image_data = base64.b64decode(response_api.image)
         returned_image = bytesio_to_image_tensor(BytesIO(image_data))
@@ -194,17 +204,19 @@ class StabilityStableImageSD_3_5Node:
                     {
                         "multiline": True,
                         "default": "",
-                        "tooltip": "What you wish to see in the output image. A strong, descriptive prompt that clearly defines elements, colors, and subjects will lead to better results."
+                        "tooltip": "What you wish to see in the output image. A strong, descriptive prompt that clearly defines elements, colors, and subjects will lead to better results.",
                     },
                 ),
                 "model": ([x.value for x in Stability_SD3_5_Model],),
-                "aspect_ratio": ([x.value for x in StabilityAspectRatio],
+                "aspect_ratio": (
+                    [x.value for x in StabilityAspectRatio],
                     {
                         "default": StabilityAspectRatio.ratio_1_1,
                         "tooltip": "Aspect ratio of generated image.",
                     },
                 ),
-                "style_preset": (get_stability_style_presets(),
+                "style_preset": (
+                    get_stability_style_presets(),
                     {
                         "tooltip": "Optional desired style of generated image.",
                     },
@@ -237,7 +249,7 @@ class StabilityStableImageSD_3_5Node:
                     {
                         "default": "",
                         "forceInput": True,
-                        "tooltip": "Keywords of what you do not wish to see in the output image. This is an advanced feature."
+                        "tooltip": "Keywords of what you do not wish to see in the output image. This is an advanced feature.",
                     },
                 ),
                 "image_denoise": (
@@ -257,15 +269,25 @@ class StabilityStableImageSD_3_5Node:
             },
         }
 
-    def api_call(self, model: str, prompt: str, aspect_ratio: str, style_preset: str, seed: int, cfg_scale: float,
-                 negative_prompt: str=None, image: torch.Tensor = None, image_denoise: float=None,
-                 **kwargs):
+    def api_call(
+        self,
+        model: str,
+        prompt: str,
+        aspect_ratio: str,
+        style_preset: str,
+        seed: int,
+        cfg_scale: float,
+        negative_prompt: str = None,
+        image: torch.Tensor = None,
+        image_denoise: float = None,
+        **kwargs,
+    ):
         validate_string(prompt, strip_whitespace=False)
         # prepare image binary if image present
         image_binary = None
         mode = Stability_SD3_5_GenerationMode.text_to_image
         if image is not None:
-            image_binary = tensor_to_bytesio(image, total_pixels=1504*1504).read()
+            image_binary = tensor_to_bytesio(image, total_pixels=1504 * 1504).read()
             mode = Stability_SD3_5_GenerationMode.image_to_image
             aspect_ratio = None
         else:
@@ -276,9 +298,7 @@ class StabilityStableImageSD_3_5Node:
         if style_preset == "None":
             style_preset = None
 
-        files = {
-            "image": image_binary
-        }
+        files = {"image": image_binary}
 
         operation = SynchronousOperation(
             endpoint=ApiEndpoint(
@@ -305,7 +325,9 @@ class StabilityStableImageSD_3_5Node:
         response_api = operation.execute()
 
         if response_api.finish_reason != "SUCCESS":
-            raise Exception(f"Stable Diffusion 3.5 Image generation failed: {response_api.finish_reason}.")
+            raise Exception(
+                f"Stable Diffusion 3.5 Image generation failed: {response_api.finish_reason}."
+            )
 
         image_data = base64.b64decode(response_api.image)
         returned_image = bytesio_to_image_tensor(BytesIO(image_data))
@@ -334,7 +356,7 @@ class StabilityUpscaleConservativeNode:
                     {
                         "multiline": True,
                         "default": "",
-                        "tooltip": "What you wish to see in the output image. A strong, descriptive prompt that clearly defines elements, colors, and subjects will lead to better results."
+                        "tooltip": "What you wish to see in the output image. A strong, descriptive prompt that clearly defines elements, colors, and subjects will lead to better results.",
                     },
                 ),
                 "creativity": (
@@ -364,7 +386,7 @@ class StabilityUpscaleConservativeNode:
                     {
                         "default": "",
                         "forceInput": True,
-                        "tooltip": "Keywords of what you do not wish to see in the output image. This is an advanced feature."
+                        "tooltip": "Keywords of what you do not wish to see in the output image. This is an advanced feature.",
                     },
                 ),
             },
@@ -374,17 +396,22 @@ class StabilityUpscaleConservativeNode:
             },
         }
 
-    def api_call(self, image: torch.Tensor, prompt: str, creativity: float, seed: int, negative_prompt: str=None,
-                 **kwargs):
+    def api_call(
+        self,
+        image: torch.Tensor,
+        prompt: str,
+        creativity: float,
+        seed: int,
+        negative_prompt: str = None,
+        **kwargs,
+    ):
         validate_string(prompt, strip_whitespace=False)
-        image_binary = tensor_to_bytesio(image, total_pixels=1024*1024).read()
+        image_binary = tensor_to_bytesio(image, total_pixels=1024 * 1024).read()
 
         if not negative_prompt:
             negative_prompt = None
 
-        files = {
-            "image": image_binary
-        }
+        files = {"image": image_binary}
 
         operation = SynchronousOperation(
             endpoint=ApiEndpoint(
@@ -396,7 +423,7 @@ class StabilityUpscaleConservativeNode:
             request=StabilityUpscaleConservativeRequest(
                 prompt=prompt,
                 negative_prompt=negative_prompt,
-                creativity=round(creativity,2),
+                creativity=round(creativity, 2),
                 seed=seed,
             ),
             files=files,
@@ -406,7 +433,9 @@ class StabilityUpscaleConservativeNode:
         response_api = operation.execute()
 
         if response_api.finish_reason != "SUCCESS":
-            raise Exception(f"Stability Upscale Conservative generation failed: {response_api.finish_reason}.")
+            raise Exception(
+                f"Stability Upscale Conservative generation failed: {response_api.finish_reason}."
+            )
 
         image_data = base64.b64decode(response_api.image)
         returned_image = bytesio_to_image_tensor(BytesIO(image_data))
@@ -435,7 +464,7 @@ class StabilityUpscaleCreativeNode:
                     {
                         "multiline": True,
                         "default": "",
-                        "tooltip": "What you wish to see in the output image. A strong, descriptive prompt that clearly defines elements, colors, and subjects will lead to better results."
+                        "tooltip": "What you wish to see in the output image. A strong, descriptive prompt that clearly defines elements, colors, and subjects will lead to better results.",
                     },
                 ),
                 "creativity": (
@@ -448,7 +477,8 @@ class StabilityUpscaleCreativeNode:
                         "tooltip": "Controls the likelihood of creating additional details not heavily conditioned by the init image.",
                     },
                 ),
-                "style_preset": (get_stability_style_presets(),
+                "style_preset": (
+                    get_stability_style_presets(),
                     {
                         "tooltip": "Optional desired style of generated image.",
                     },
@@ -470,7 +500,7 @@ class StabilityUpscaleCreativeNode:
                     {
                         "default": "",
                         "forceInput": True,
-                        "tooltip": "Keywords of what you do not wish to see in the output image. This is an advanced feature."
+                        "tooltip": "Keywords of what you do not wish to see in the output image. This is an advanced feature.",
                     },
                 ),
             },
@@ -480,19 +510,25 @@ class StabilityUpscaleCreativeNode:
             },
         }
 
-    def api_call(self, image: torch.Tensor, prompt: str, creativity: float, style_preset: str, seed: int, negative_prompt: str=None,
-                 **kwargs):
+    def api_call(
+        self,
+        image: torch.Tensor,
+        prompt: str,
+        creativity: float,
+        style_preset: str,
+        seed: int,
+        negative_prompt: str = None,
+        **kwargs,
+    ):
         validate_string(prompt, strip_whitespace=False)
-        image_binary = tensor_to_bytesio(image, total_pixels=1024*1024).read()
+        image_binary = tensor_to_bytesio(image, total_pixels=1024 * 1024).read()
 
         if not negative_prompt:
             negative_prompt = None
         if style_preset == "None":
             style_preset = None
 
-        files = {
-            "image": image_binary
-        }
+        files = {"image": image_binary}
 
         operation = SynchronousOperation(
             endpoint=ApiEndpoint(
@@ -504,7 +540,7 @@ class StabilityUpscaleCreativeNode:
             request=StabilityUpscaleCreativeRequest(
                 prompt=prompt,
                 negative_prompt=negative_prompt,
-                creativity=round(creativity,2),
+                creativity=round(creativity, 2),
                 style_preset=style_preset,
                 seed=seed,
             ),
@@ -530,7 +566,9 @@ class StabilityUpscaleCreativeNode:
         response_poll: StabilityResultsGetResponse = operation.execute()
 
         if response_poll.finish_reason != "SUCCESS":
-            raise Exception(f"Stability Upscale Creative generation failed: {response_poll.finish_reason}.")
+            raise Exception(
+                f"Stability Upscale Creative generation failed: {response_poll.finish_reason}."
+            )
 
         image_data = base64.b64decode(response_poll.result)
         returned_image = bytesio_to_image_tensor(BytesIO(image_data))
@@ -555,21 +593,17 @@ class StabilityUpscaleFastNode:
             "required": {
                 "image": (IO.IMAGE,),
             },
-            "optional": {
-            },
+            "optional": {},
             "hidden": {
                 "auth_token": "AUTH_TOKEN_COMFY_ORG",
                 "comfy_api_key": "API_KEY_COMFY_ORG",
             },
         }
 
-    def api_call(self, image: torch.Tensor,
-                 **kwargs):
-        image_binary = tensor_to_bytesio(image, total_pixels=4096*4096).read()
+    def api_call(self, image: torch.Tensor, **kwargs):
+        image_binary = tensor_to_bytesio(image, total_pixels=4096 * 4096).read()
 
-        files = {
-            "image": image_binary
-        }
+        files = {"image": image_binary}
 
         operation = SynchronousOperation(
             endpoint=ApiEndpoint(
@@ -586,7 +620,9 @@ class StabilityUpscaleFastNode:
         response_api = operation.execute()
 
         if response_api.finish_reason != "SUCCESS":
-            raise Exception(f"Stability Upscale Fast failed: {response_api.finish_reason}.")
+            raise Exception(
+                f"Stability Upscale Fast failed: {response_api.finish_reason}."
+            )
 
         image_data = base64.b64decode(response_api.image)
         returned_image = bytesio_to_image_tensor(BytesIO(image_data))
