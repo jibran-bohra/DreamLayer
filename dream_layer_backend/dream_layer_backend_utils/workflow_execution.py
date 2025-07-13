@@ -1,9 +1,11 @@
-import requests
 import logging
+
+import requests
 
 logger = logging.getLogger(__name__)
 
 COMFY_API_URL = "http://127.0.0.1:8188"
+
 
 def interrupt_workflow():
     """
@@ -19,4 +21,4 @@ def interrupt_workflow():
             return False
     except Exception as e:
         logger.error(f"Error interrupting workflow: {str(e)}")
-        return False 
+        return False
