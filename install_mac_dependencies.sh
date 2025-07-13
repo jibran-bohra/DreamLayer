@@ -105,9 +105,10 @@ install_python() {
         print_success "Python installed successfully"
     fi
     
-    # Ensure pip is available
-    if ! command_exists pip3; then
-        print_step "Installing pip..."
+    # Ensure pip is available in the current Python environment
+    print_step "Ensuring pip is available..."
+    if ! python3 -c "import pip" 2>/dev/null; then
+        print_step "Installing pip using ensurepip..."
         python3 -m ensurepip --upgrade
     fi
     
@@ -138,8 +139,17 @@ install_nodejs() {
     
     # Ensure npm is available and up to date
     if command_exists npm; then
-        print_step "Updating npm..."
-        npm install -g npm@latest
+        print_step "Checking npm version..."
+        local npm_version=$(npm --version)
+        print_status "Current npm version: $npm_version"
+        
+        # Skip npm update if installed via Homebrew to avoid conflicts
+        if command_exists brew && brew list node &>/dev/null; then
+            print_success "npm is managed by Homebrew and will be updated with Node.js"
+        else
+            print_step "Updating npm..."
+            npm install -g npm@latest
+        fi
     fi
 }
 
